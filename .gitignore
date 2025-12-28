@@ -1,0 +1,117 @@
+# ==============================================================================
+# FortiRent - Security-Focused .gitignore
+# ==============================================================================
+# This file ensures that sensitive information, dependencies, and build artifacts
+# are not committed to the repository.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. DEPENDENCIES & PACKAGE MANAGERS
+# ------------------------------------------------------------------------------
+# Ignore third-party libraries to keep the repo clean and prevent 
+# supply chain attacks via committed binaries.
+node_modules/
+jspm_packages/
+package-lock.json.lock
+
+# ------------------------------------------------------------------------------
+# 2. ENVIRONMENT VARIABLES & SECRETS (CRITICAL SECURITY)
+# ------------------------------------------------------------------------------
+# These files contain sensitive API keys, database credentials, and secrets.
+# Committing these allows attackers to scan GitHub/GitLab for keys.
+# EXCEPTION: Commit a .env.example with dummy values to guide developers.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.*
+
+# ------------------------------------------------------------------------------
+# 3. LOGS & DIAGNOSTICS
+# ------------------------------------------------------------------------------
+# Logs often contain stack traces, paths, or even user data (PII) 
+# dumped during runtime errors.
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------------------------------------------------------
+# 4. BUILD OUTPUTS & COMPILED FILES
+# ------------------------------------------------------------------------------
+# These are generated artifacts. Committing them can lead to merge conflicts
+# and may contain minified code that hides logic.
+dist/
+build/
+out/
+.next/
+.nuxt/
+.vuepress/dist
+coverage/
+.nyc_output/
+
+# ------------------------------------------------------------------------------
+# 5. OS & IDE FILES
+# ------------------------------------------------------------------------------
+# System files expose information about the developer's OS and tools,
+# which can help attackers profile the target environment.
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# VS Code (Keep settings that enforce code style if agreed upon)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ / WebStorm
+.idea/
+*.iml
+*.iws
+
+# ------------------------------------------------------------------------------
+# 6. TESTING & TEMPORARY FILES
+# ------------------------------------------------------------------------------
+.test
+.cache
+.eslintcache
+.stylelintcache
+
+# ------------------------------------------------------------------------------
+# 7. BACKEND SPECIFIC (File Uploads & DB)
+# ------------------------------------------------------------------------------
+# Prevent user-uploaded content (which could be malicious) or live databases
+# from entering the version control system.
+backend/uploads/
+backend/storage/
+backend/public/images/uploads/
+# Keep the directory structure but ignore files
+!backend/uploads/.gitkeep
+
+# SQLite / Local DBs
+*.sqlite
+*.sqlite3
+*.db
+
+# ------------------------------------------------------------------------------
+# 8. FRONTEND SPECIFIC
+# ------------------------------------------------------------------------------
+# Vite / Webpack / React artifacts
+frontend/.eslintcache
+frontend/dist/
+frontend/build/
+frontend/.vite/
