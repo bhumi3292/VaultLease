@@ -13,7 +13,8 @@ export default function AdminDashboard() {
     const [departments, setDepartments] = useState([]);
     const [requests, setRequests] = useState([]);
     const [auditLogs, setAuditLogs] = useState([]);
-    const [activeTab, setActiveTab] = useState('users'); // 'users', 'departments', 'requests', 'audit'
+    const [assets, setAssets] = useState([]);
+    const [activeTab, setActiveTab] = useState('users'); // 'users', 'departments', 'requests', 'inventory', 'audit'
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -33,8 +34,23 @@ export default function AdminDashboard() {
             fetchDepartments();
             fetchRequests();
             fetchAuditLogs();
+            fetchAssets();
         }
     }, [user]);
+
+    const fetchAssets = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get('http://localhost:3001/api/assets', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                setAssets(response.data.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch assets", error);
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -203,6 +219,12 @@ export default function AdminDashboard() {
                     onClick={() => setActiveTab('requests')}
                 >
                     All Requests
+                </button>
+                <button
+                    className={`pb-2 px-1 font-medium ${activeTab === 'inventory' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setActiveTab('inventory')}
+                >
+                    Inventory
                 </button>
                 <button
                     className={`pb-2 px-1 font-medium ${activeTab === 'audit' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
@@ -382,6 +404,63 @@ export default function AdminDashboard() {
                                 {requests.length === 0 && (
                                     <tr>
                                         <td colSpan="4" className="px-6 py-8 text-center text-gray-500">No requests found.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'inventory' && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h2 className="text-xl font-bold text-gray-900">Asset Inventory</h2>
+                        <span className="text-sm text-gray-500">{assets.length} Assets Registered</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
+                                <tr>
+                                    <th className="px-6 py-4">Asset Name</th>
+                                    <th className="px-6 py-4">Serial Number</th>
+                                    <th className="px-6 py-4">Quantity</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Department</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {assets.map(asset => (
+                                    <tr key={asset._id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 font-bold text-gray-900">{asset.name}</td>
+                                        <td className="px-6 py-4 text-xs font-mono">{asset.serialNumber}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold">{asset.availableQuantity} / {asset.totalQuantity}</span>
+                                                <div className="w-24 bg-gray-200 h-1.5 rounded-full mt-1 overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${asset.availableQuantity === 0 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                                        style={{ width: `${(asset.availableQuantity / asset.totalQuantity) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-md text-xs font-bold border ${asset.status === 'Available' ? 'bg-emerald-50 content-emerald-700 border-emerald-100' :
+                                                    asset.status === 'Borrowed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                        'bg-gray-50 text-gray-700 border-gray-100'
+                                                }`}>
+                                                {asset.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-600 text-sm">
+                                            {asset.department}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {assets.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500">No assets in inventory.</td>
                                     </tr>
                                 )}
                             </tbody>
