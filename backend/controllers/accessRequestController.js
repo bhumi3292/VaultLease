@@ -1,6 +1,8 @@
 const AccessRequest = require('../models/AccessRequest');
 const Asset = require('../models/Asset');
 const ApiResponse = require('../utils/api_response');
+const { sendEmail } = require('../utils/sendEmail');
+
 
 // 1. Create a Request (Requester)
 const createRequest = async (req, res) => {
@@ -115,11 +117,12 @@ const updateRequestStatus = async (req, res) => {
 
         // Logic for specific transitions
         if (status === 'Active') {
-            // "Checkout" - Asset remains decreased (reserved).
-            // Optional: Update status text if needed, but 'Borrowed' might have been set if 0.
+            // "Checkout" - Already decremented at creation.
+            const subject = `Asset Checked Out: ${request.asset.name}`;
+            const text = `You have successfully checked out ${request.asset.name}. Expected return: ${new Date(request.expectedReturnDate).toDateString()}.`;
+            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
         }
         else if (status === 'Returned') {
-            // "Return" - Asset becomes Available, Qty + 1
             const now = new Date();
             request.actualReturnDate = now;
 
@@ -128,16 +131,26 @@ const updateRequestStatus = async (req, res) => {
                 request.asset.status = 'Available';
             }
             await request.asset.save();
+
+            const subject = `Asset Returned: ${request.asset.name}`;
+            const text = `The asset ${request.asset.name} has been marked as returned. Thank you!`;
+            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
         }
         else if (status === 'Rejected' || status === 'Cancelled') {
-            // "Release Reservation" - Qty + 1
-            // Only release if it was previously reserving stock (i.e., not already returned/rejected)
-            // Assuming we only transition from Pending/Approved here.
             request.asset.availableQuantity += 1;
             if (request.asset.availableQuantity > 0) {
                 request.asset.status = 'Available';
             }
             await request.asset.save();
+
+            const subject = `Access Request ${status}: ${request.asset.name}`;
+            const text = `Your request for ${request.asset.name} has been ${status.toLowerCase()}. ${adminNotes ? 'Note: ' + adminNotes : ''}`;
+            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
+        }
+        else if (status === 'Approved') {
+            const subject = `Access Request Approved: ${request.asset.name}`;
+            const text = `Your request for ${request.asset.name} has been approved. Please visit the department to pick up the item.`;
+            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
         }
 
         request.status = status;
@@ -151,8 +164,8 @@ const updateRequestStatus = async (req, res) => {
         let actionType = 'UPDATE';
         if (status === 'Approved') actionType = 'APPROVE';
         else if (status === 'Rejected') actionType = 'REJECT';
-        else if (status === 'Active') actionType = 'CHECKOUT'; // Asset Borrowed
-        else if (status === 'Returned') actionType = 'RETURN'; // Asset Returned
+        else if (status === 'Active') actionType = 'CHECKOUT';
+        else if (status === 'Returned') actionType = 'RETURN';
 
         await logAction({
             userId: req.user._id,
