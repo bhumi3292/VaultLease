@@ -37,6 +37,7 @@ const chatRoutes = require('./routes/chatRoute');
 const userRoutes = require('./routes/userRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const auditLogRoutes = require('./routes/auditLogRoutes'); // Add this
+const notificationRoutes = require('./routes/notificationRoutes');
 
 app.use("/api/auth", authRoutes);
 app.use("/api/assets", assetRoutes);
@@ -44,7 +45,8 @@ app.use("/api/access", accessRequestRoutes);
 app.use("/api/users", userRoutes); // User Management
 app.use("/api/category", categoryRoutes); // Category management
 app.use("/api/departments", departmentRoutes);
-app.use("/api/audit-logs", auditLogRoutes); // Add this
+app.use("/api/audit-logs", auditLogRoutes);
+app.use("/api/notifications", notificationRoutes);
 // app.use("/api/cart", cartRoutes); // Cart logic not yet refactored for Assets
 app.use('/api/payments', paymentRoutes);
 // app.use('/api/calendar', calendarRoutes); // Calendar logic (timeslots) incompatible with Asset duration logic

@@ -371,6 +371,7 @@ export default function AdminDashboard() {
                             <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
                                 <tr>
                                     <th className="px-6 py-4">Asset</th>
+                                    <th className="px-6 py-4">Department</th>
                                     <th className="px-6 py-4">Requester</th>
                                     <th className="px-6 py-4">Dates</th>
                                     <th className="px-6 py-4">Status</th>
@@ -382,6 +383,9 @@ export default function AdminDashboard() {
                                         <td className="px-6 py-4">
                                             <div className="font-bold text-gray-900">{req.asset?.name || 'Unknown'}</div>
                                             <div className="text-xs text-gray-500">{req.asset?.serialNumber}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            {req.asset?.department || '-'}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium">{req.requester?.fullName}</div>
@@ -447,8 +451,8 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-md text-xs font-bold border ${asset.status === 'Available' ? 'bg-emerald-50 content-emerald-700 border-emerald-100' :
-                                                    asset.status === 'Borrowed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                        'bg-gray-50 text-gray-700 border-gray-100'
+                                                asset.status === 'Borrowed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                    'bg-gray-50 text-gray-700 border-gray-100'
                                                 }`}>
                                                 {asset.status}
                                             </span>

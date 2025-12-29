@@ -1,7 +1,8 @@
 const AccessRequest = require('../models/AccessRequest');
 const Asset = require('../models/Asset');
 const ApiResponse = require('../utils/api_response');
-const { sendEmail } = require('../utils/sendEmail');
+const { notify } = require('../utils/notifier');
+
 
 
 // 1. Create a Request (Requester)
@@ -120,7 +121,15 @@ const updateRequestStatus = async (req, res) => {
             // "Checkout" - Already decremented at creation.
             const subject = `Asset Checked Out: ${request.asset.name}`;
             const text = `You have successfully checked out ${request.asset.name}. Expected return: ${new Date(request.expectedReturnDate).toDateString()}.`;
-            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
+            await notify({
+                userId: request.requester._id,
+                email: request.requester.email,
+                subject,
+                text,
+                html: `<p>${text}</p>`,
+                type: 'SUCCESS',
+                link: '/my-requests'
+            });
         }
         else if (status === 'Returned') {
             const now = new Date();
@@ -134,7 +143,14 @@ const updateRequestStatus = async (req, res) => {
 
             const subject = `Asset Returned: ${request.asset.name}`;
             const text = `The asset ${request.asset.name} has been marked as returned. Thank you!`;
-            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
+            await notify({
+                userId: request.requester._id,
+                email: request.requester.email,
+                subject,
+                text,
+                html: `<p>${text}</p>`,
+                type: 'SUCCESS'
+            });
         }
         else if (status === 'Rejected' || status === 'Cancelled') {
             request.asset.availableQuantity += 1;
@@ -145,12 +161,27 @@ const updateRequestStatus = async (req, res) => {
 
             const subject = `Access Request ${status}: ${request.asset.name}`;
             const text = `Your request for ${request.asset.name} has been ${status.toLowerCase()}. ${adminNotes ? 'Note: ' + adminNotes : ''}`;
-            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
+            await notify({
+                userId: request.requester._id,
+                email: request.requester.email,
+                subject,
+                text,
+                html: `<p>${text}</p>`,
+                type: status === 'Rejected' ? 'WARNING' : 'INFO'
+            });
         }
         else if (status === 'Approved') {
             const subject = `Access Request Approved: ${request.asset.name}`;
             const text = `Your request for ${request.asset.name} has been approved. Please visit the department to pick up the item.`;
-            await sendEmail(request.requester.email, subject, text, `<p>${text}</p>`);
+            await notify({
+                userId: request.requester._id,
+                email: request.requester.email,
+                subject,
+                text,
+                html: `<p>${text}</p>`,
+                type: 'SUCCESS',
+                link: '/my-requests'
+            });
         }
 
         request.status = status;
