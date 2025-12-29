@@ -74,4 +74,27 @@ AccessRequestSchema.index({ requester: 1, status: 1 });
 AccessRequestSchema.index({ asset: 1, status: 1 });
 AccessRequestSchema.index({ department: 1 }); // If we add department denormalization later
 
+const { encrypt, decrypt } = require("../utils/encryption");
+
+// Encrypt Notes before save
+AccessRequestSchema.pre("save", function (next) {
+    if (this.isModified("requestNotes")) {
+        this.requestNotes = encrypt(this.requestNotes);
+    }
+    if (this.isModified("adminNotes")) {
+        this.adminNotes = encrypt(this.adminNotes);
+    }
+    next();
+});
+
+// Decrypt Notes when loading
+AccessRequestSchema.post('init', function (doc) {
+    if (doc.requestNotes) {
+        doc.requestNotes = decrypt(doc.requestNotes);
+    }
+    if (doc.adminNotes) {
+        doc.adminNotes = decrypt(doc.adminNotes);
+    }
+});
+
 module.exports = mongoose.model('AccessRequest', AccessRequestSchema);

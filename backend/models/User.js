@@ -97,52 +97,49 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
+const { encrypt, decrypt } = require("../utils/encryption");
+
 // ------------------------------
-// Hash Password Before Save
+// Hash Password & Encrypt Personal Data Before Save
 // ------------------------------
 userSchema.pre("save", async function (next) {
-    // Only run if password was modified
-    if (!this.isModified("password")) return next();
+    // 1. Password Management
+    if (this.isModified("password")) {
+        try {
+            if (!this.isNew) {
+                const oldUser = await this.constructor.findById(this._id).select('+password +passwordHistory');
+                if (oldUser) {
+                    const isCurrent = await bcrypt.compare(this.password, oldUser.password);
+                    if (isCurrent) throw new Error("Password cannot be the same as current.");
 
-    try {
-        // If updating an existing user (not a new one), check for reuse
-        if (!this.isNew) {
-            const oldUser = await this.constructor.findById(this._id).select('+password +passwordHistory');
-
-            if (oldUser) {
-                // 1. Check against current active password
-                const isCurrent = await bcrypt.compare(this.password, oldUser.password);
-                if (isCurrent) {
-                    throw new Error("Password cannot be the same as the current password.");
-                }
-
-                // 2. Check against password history
-                if (oldUser.passwordHistory && oldUser.passwordHistory.length > 0) {
-                    for (const historyHash of oldUser.passwordHistory) {
-                        const isReuse = await bcrypt.compare(this.password, historyHash);
-                        if (isReuse) {
-                            throw new Error("Password cannot be one of the last 5 used passwords.");
+                    if (oldUser.passwordHistory && oldUser.passwordHistory.length > 0) {
+                        for (const historyHash of oldUser.passwordHistory) {
+                            const isReuse = await bcrypt.compare(this.password, historyHash);
+                            if (isReuse) throw new Error("Password cannot be one of the last 5 used.");
                         }
                     }
+                    let newHistory = [oldUser.password, ...(oldUser.passwordHistory || [])].slice(0, 5);
+                    this.passwordHistory = newHistory;
                 }
-
-                // 3. Update history: [oldPassword, ...oldHistory].slice(0, 3)
-                let newHistory = [oldUser.password, ...(oldUser.passwordHistory || [])];
-                if (newHistory.length > 5) newHistory = newHistory.slice(0, 5);
-                this.passwordHistory = newHistory;
             }
-        }
+            const salt = await bcrypt.genSalt(12);
+            this.password = await bcrypt.hash(this.password, salt);
+            this.passwordChangedAt = Date.now();
+        } catch (error) { return next(error); }
+    }
 
-        // Security: Use 12 rounds for hashing
-        const salt = await bcrypt.genSalt(12);
-        this.password = await bcrypt.hash(this.password, salt);
+    // 2. Encryption (Personal Data)
+    if (this.isModified("phoneNumber")) {
+        this.phoneNumber = encrypt(this.phoneNumber);
+    }
 
-        // Update change timestamp
-        this.passwordChangedAt = Date.now();
+    next();
+});
 
-        next();
-    } catch (error) {
-        next(error);
+// Decrypt phoneNumber when loading (findOne, find, etc.)
+userSchema.post('init', function (doc) {
+    if (doc.phoneNumber) {
+        doc.phoneNumber = decrypt(doc.phoneNumber);
     }
 });
 
