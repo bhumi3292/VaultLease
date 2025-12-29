@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const seedAdmin = async () => {
     try {
         const adminEmail = "bhumisubedi2018@gmail.com";
-        const adminPassword = "MainAdmin1@gmail.com";
+        const adminPassword = "MainAdmin@gmail.com";
         const existingAdmin = await User.findOne({ email: adminEmail });
 
         if (existingAdmin) {
@@ -20,6 +20,8 @@ const seedAdmin = async () => {
             role: "ADMIN",
             universityId: "ADMIN001",
             password: adminPassword, // Will be hashed by pre-save hook
+            department: "System Administration",
+            isMFAEnabled: true,
             passwordHistory: [],
             isVerified: true
         });

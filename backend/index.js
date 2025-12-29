@@ -9,6 +9,7 @@ const multer = require("multer");
 const connectDB = require("./config/db");
 const seedAdmin = require("./utils/seedAdmin");
 const ApiError = require("./utils/api_error");
+const initCronJobs = require("./jobs/checkOverdue");
 
 const app = express();
 
@@ -34,12 +35,16 @@ const chatbotRoutes = require('./routes/chatbotRoute');
 const chatRoutes = require('./routes/chatRoute');
 
 const userRoutes = require('./routes/userRoutes');
+const departmentRoutes = require('./routes/departmentRoutes');
+const auditLogRoutes = require('./routes/auditLogRoutes'); // Add this
 
 app.use("/api/auth", authRoutes);
 app.use("/api/assets", assetRoutes);
 app.use("/api/access", accessRequestRoutes);
 app.use("/api/users", userRoutes); // User Management
 app.use("/api/category", categoryRoutes); // Category management
+app.use("/api/departments", departmentRoutes);
+app.use("/api/audit-logs", auditLogRoutes); // Add this
 // app.use("/api/cart", cartRoutes); // Cart logic not yet refactored for Assets
 app.use('/api/payments', paymentRoutes);
 // app.use('/api/calendar', calendarRoutes); // Calendar logic (timeslots) incompatible with Asset duration logic
@@ -104,6 +109,7 @@ app.use((err, req, res, next) => {
 module.exports = app;
 
 // Server Start & Socket.IO
+// Trigger restart 2
 if (require.main === module) {
     const http = require("http");
     const { Server } = require("socket.io");
@@ -123,6 +129,7 @@ if (require.main === module) {
         .then(() => {
             console.log("MongoDB connected successfully!");
             seedAdmin();
+            initCronJobs();
         })
         .catch((err) => {
             console.error("Failed to connect to DB:", err);
