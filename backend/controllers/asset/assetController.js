@@ -17,6 +17,11 @@ const createAsset = async (req, res) => {
             department: req.user.department
         };
 
+        // Default availableQuantity to totalQuantity if not explicitly provided
+        if (assetData.totalQuantity && assetData.availableQuantity === undefined) {
+            assetData.availableQuantity = assetData.totalQuantity;
+        }
+
         const newAsset = new Asset(assetData);
         await newAsset.save();
 
@@ -94,6 +99,17 @@ const updateAsset = async (req, res) => {
         }
 
         const updatedAsset = await Asset.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+        // Audit Log
+        const logAction = require('../../utils/auditLogger');
+        await logAction({
+            userId: req.user._id,
+            action: 'UPDATE',
+            entity: 'Asset',
+            entityId: updatedAsset._id,
+            details: { changes: req.body }
+        }, req);
+
         return res.status(200).json(new ApiResponse(200, updatedAsset, "Asset updated successfully"));
     } catch (error) {
         return res.status(500).json(new ApiResponse(500, null, error.message));
@@ -110,6 +126,17 @@ const deleteAsset = async (req, res) => {
         }
 
         await Asset.findByIdAndDelete(req.params.id);
+
+        // Audit Log
+        const logAction = require('../../utils/auditLogger');
+        await logAction({
+            userId: req.user._id,
+            action: 'DELETE',
+            entity: 'Asset',
+            entityId: req.params.id,
+            details: { name: asset.name }
+        }, req);
+
         return res.status(200).json(new ApiResponse(200, null, "Asset deleted successfully"));
     } catch (error) {
         return res.status(500).json(new ApiResponse(500, null, error.message));

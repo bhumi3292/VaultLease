@@ -10,8 +10,8 @@ const createRequest = async (req, res) => {
         const asset = await Asset.findById(assetId);
         if (!asset) return res.status(404).json(new ApiResponse(404, null, "Asset not found"));
 
-        if (asset.status !== 'Available') {
-            return res.status(400).json(new ApiResponse(400, null, "Asset is not currently available"));
+        if (asset.availableQuantity < 1) {
+            return res.status(400).json(new ApiResponse(400, null, "Asset is out of stock / unavailable"));
         }
 
         const newRequest = new AccessRequest({
@@ -24,7 +24,29 @@ const createRequest = async (req, res) => {
             accessFee: asset.accessFee // Copy current fee at time of request
         });
 
+        // Reserve the item (Decrement quantity instantly to prevent double booking)
+        asset.availableQuantity -= 1;
+        if (asset.availableQuantity === 0) {
+            asset.status = 'Borrowed'; // Or 'Out of Stock'
+        }
+        await asset.save();
+
         await newRequest.save();
+
+        // Audit Log
+        const logAction = require('../utils/auditLogger');
+        await logAction({
+            userId: req.user._id,
+            action: 'REQUEST_INITIATED',
+            entity: 'AccessRequest',
+            entityId: newRequest._id,
+            details: {
+                asset: asset.name,
+                startDate,
+                expectedReturnDate
+            }
+        }, req);
+
         return res.status(201).json(new ApiResponse(201, newRequest, "Access request submitted"));
     } catch (error) {
         return res.status(500).json(new ApiResponse(500, null, error.message));
@@ -62,6 +84,20 @@ const getDepartmentRequests = async (req, res) => {
     }
 };
 
+// 3.5 Get All Requests (Super Admin)
+const getAllRequests = async (req, res) => {
+    try {
+        const requests = await AccessRequest.find({})
+            .populate('asset')
+            .populate('requester', 'fullName email universityId')
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json(new ApiResponse(200, requests, "All system requests"));
+    } catch (error) {
+        return res.status(500).json(new ApiResponse(500, null, error.message));
+    }
+};
+
 // 4. Update Status (Administrator: Approve, Reject, Issue, Return)
 // This is the core workflow engine.
 const updateRequestStatus = async (req, res) => {
@@ -79,13 +115,29 @@ const updateRequestStatus = async (req, res) => {
 
         // Logic for specific transitions
         if (status === 'Active') {
-            // "Checkout" - Asset becomes In Use
-            await Asset.findByIdAndUpdate(request.asset._id, { status: 'In Use' });
-        } else if (status === 'Returned') {
-            // "Return" - Asset becomes Available
+            // "Checkout" - Asset remains decreased (reserved).
+            // Optional: Update status text if needed, but 'Borrowed' might have been set if 0.
+        }
+        else if (status === 'Returned') {
+            // "Return" - Asset becomes Available, Qty + 1
             const now = new Date();
             request.actualReturnDate = now;
-            await Asset.findByIdAndUpdate(request.asset._id, { status: 'Available' });
+
+            request.asset.availableQuantity += 1;
+            if (request.asset.availableQuantity > 0) {
+                request.asset.status = 'Available';
+            }
+            await request.asset.save();
+        }
+        else if (status === 'Rejected' || status === 'Cancelled') {
+            // "Release Reservation" - Qty + 1
+            // Only release if it was previously reserving stock (i.e., not already returned/rejected)
+            // Assuming we only transition from Pending/Approved here.
+            request.asset.availableQuantity += 1;
+            if (request.asset.availableQuantity > 0) {
+                request.asset.status = 'Available';
+            }
+            await request.asset.save();
         }
 
         request.status = status;
@@ -96,9 +148,15 @@ const updateRequestStatus = async (req, res) => {
 
         // Audit Log
         const logAction = require('../utils/auditLogger');
+        let actionType = 'UPDATE';
+        if (status === 'Approved') actionType = 'APPROVE';
+        else if (status === 'Rejected') actionType = 'REJECT';
+        else if (status === 'Active') actionType = 'CHECKOUT'; // Asset Borrowed
+        else if (status === 'Returned') actionType = 'RETURN'; // Asset Returned
+
         await logAction({
             userId: req.user._id,
-            action: 'UPDATE', // Could be dynamic based on status (APPROVE/REJECT)
+            action: actionType,
             entity: 'AccessRequest',
             entityId: request._id,
             details: {
@@ -118,5 +176,6 @@ module.exports = {
     createRequest,
     getMyRequests,
     getDepartmentRequests,
+    getAllRequests,
     updateRequestStatus
 };

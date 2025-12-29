@@ -8,14 +8,14 @@ const roleCheck = require('../middlewares/role');
 router.post(
     '/request',
     authenticateUser,
-    roleCheck('STUDENT'),
+    roleCheck('REQUESTER'),
     accessRequestController.createRequest
 );
 
 router.get(
     '/my-requests',
     authenticateUser,
-    roleCheck('STUDENT'),
+    roleCheck('REQUESTER'),
     accessRequestController.getMyRequests
 );
 
@@ -25,6 +25,13 @@ router.get(
     authenticateUser,
     roleCheck('ADMINISTRATOR', 'ADMIN'),
     accessRequestController.getDepartmentRequests
+);
+
+router.get(
+    '/all-requests',
+    authenticateUser,
+    roleCheck('ADMIN'),
+    accessRequestController.getAllRequests
 );
 
 router.put(
