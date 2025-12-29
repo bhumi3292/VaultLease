@@ -29,22 +29,43 @@ const assetSchema = new mongoose.Schema({
     // Ownership & Location
     administrator: {
         type: mongoose.Schema.ObjectId,
-        ref: "User",
+        ref: "User", // The Administrator managing this asset
         required: true
     },
     department: {
         type: String,
-        required: true
+        required: [true, "Department is required"],
+        index: true
     },
     location: {
         type: String,
         required: [true, "Asset location is required (e.g., Building C, Room 302)"]
     },
 
+    // Quantity Management (New)
+    totalQuantity: {
+        type: Number,
+        required: true,
+        default: 1,
+        min: 1
+    },
+    availableQuantity: {
+        type: Number,
+        required: true,
+        default: 1,
+        min: 0,
+        validate: {
+            validator: function (v) {
+                return v <= this.totalQuantity;
+            },
+            message: "Available quantity cannot exceed total quantity."
+        }
+    },
+
     // Availability & Status
     status: {
         type: String,
-        enum: ['Available', 'In Use', 'Maintenance', 'Lost', 'Retired'],
+        enum: ['Available', 'Borrowed', 'Maintenance', 'Retired'], // Updated enum per requirement
         default: 'Available'
     },
     condition: {
@@ -69,7 +90,7 @@ const assetSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Text index for searching
-assetSchema.index({ name: 'text', description: 'text', serialNumber: 'text' });
+assetSchema.index({ name: 'text', description: 'text', serialNumber: 'text', department: 'text' });
 
 const Asset = mongoose.model("Asset", assetSchema);
 
