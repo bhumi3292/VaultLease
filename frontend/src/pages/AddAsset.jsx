@@ -1,5 +1,6 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Force rebuild
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AuthContext } from '../auth/AuthProvider';
@@ -12,6 +13,7 @@ const AddAssetPage = () => {
     const [formData, setFormData] = useState({
         name: '',
         serialNumber: '',
+        totalQuantity: 1,
         description: '',
         location: '',
         category: '64e8a2b5e0c50a1c8c8e1234', // Needs dynamic category lookup really, but for now placeholder or use text
@@ -87,6 +89,7 @@ const AddAssetPage = () => {
             data.append('description', formData.description);
             data.append('location', formData.location);
             data.append('category', formData.category);
+            data.append('totalQuantity', formData.totalQuantity);
             data.append('accessFee', formData.accessFee);
             data.append('condition', formData.condition);
             data.append('department', formData.department);
@@ -165,7 +168,7 @@ const AddAssetPage = () => {
                         <textarea name="description" rows="3" className="w-full rounded-lg border-gray-300 border p-2.5 focus:border-primary focus:ring-primary" onChange={handleChange}></textarea>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
                             {categories.length > 0 ? (
@@ -190,6 +193,10 @@ const AddAssetPage = () => {
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Access Fee ($)</label>
                             <input name="accessFee" type="number" min="0" className="w-full rounded-lg border-gray-300 border p-2.5" onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Total Quantity</label>
+                            <input name="totalQuantity" type="number" min="1" className="w-full rounded-lg border-gray-300 border p-2.5" defaultValue={1} onChange={handleChange} />
                         </div>
                     </div>
 

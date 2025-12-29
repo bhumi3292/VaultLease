@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AuthContext } from '../auth/AuthProvider';
-import { MapPin, Calendar, Clock, CheckCircle, XCircle, Info, ShieldCheck } from 'lucide-react';
+import { MapPin, Calendar, Clock, CheckCircle, XCircle, Info, ShieldCheck, Building2 } from 'lucide-react';
 
 const AssetDetails = () => {
     const { id } = useParams();
@@ -52,8 +52,8 @@ const AssetDetails = () => {
             return;
         }
 
-        if (user.role !== 'Requester') {
-            toast.error("Only Requesters (Students/Faculty) can submit access requests.");
+        if (user.role !== 'REQUESTER') {
+            toast.error("Only Requesters can submit access requests.");
             return;
         }
 
@@ -118,7 +118,7 @@ const AssetDetails = () => {
                                 <h1 className="text-3xl font-extrabold text-gray-900 leading-tight">{asset.name}</h1>
                             </div>
                             <span className={`px-3 py-1 text-sm font-bold rounded-full border ${asset.status === 'Available' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                    'bg-amber-50 text-amber-600 border-amber-100'
+                                'bg-amber-50 text-amber-600 border-amber-100'
                                 }`}>
                                 {asset.status}
                             </span>
@@ -150,9 +150,9 @@ const AssetDetails = () => {
                             <Calendar size={20} className="mr-2 text-secondary" /> Request Access
                         </h3>
 
-                        {asset.status !== 'Available' ? (
+                        {asset.availableQuantity < 1 ? (
                             <div className="bg-amber-100 text-amber-800 p-4 rounded-lg text-center font-medium border border-amber-200">
-                                This asset is currently {asset.status.toLowerCase()}.
+                                This asset is currently out of stock ({asset.availableQuantity} available).
                             </div>
                         ) : (
                             <form onSubmit={handleSubmitRequest} className="space-y-4">

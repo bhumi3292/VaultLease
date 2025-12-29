@@ -146,34 +146,15 @@ export default function ProfilePage() {
 
 
     const fetchSavedPropertiesCount = async () => {
-        setLoadingSavedProperties(true);
-        setErrorSavedProperties(null);
-        try {
-            const res = await getCartService();
-            const validItems = res.data?.items?.filter(item => item && item.property) || [];
-            setSavedPropertiesCount(validItems.length);
-        } catch (err) {
-            setErrorSavedProperties("Failed to load saved properties count.");
-            console.error(err);
-        } finally {
-            setLoadingSavedProperties(false);
-        }
+        // Cart functionality disabled for now
+        setSavedPropertiesCount(0);
+        setLoadingSavedProperties(false);
     };
 
     const fetchDetailedSavedProperties = async () => {
-        setLoadingSavedProperties(true);
-        setErrorSavedProperties(null);
-        try {
-            const res = await getCartService();
-            const validItems = res.data?.items?.filter(item => item && item.property) || [];
-            setSavedPropertiesList(validItems); // Set the actual list here
-        } catch (err) {
-            setErrorSavedProperties("Failed to load saved properties.");
-            toast.error("Error fetching saved properties.");
-            console.error(err);
-        } finally {
-            setLoadingSavedProperties(false);
-        }
+        // Cart functionality disabled for now
+        setSavedPropertiesList([]);
+        setLoadingSavedProperties(false);
     };
 
 

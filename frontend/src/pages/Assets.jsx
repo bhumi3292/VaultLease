@@ -11,7 +11,16 @@ const AssetsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDept, setSelectedDept] = useState('All');
 
+    const [departments, setDepartments] = useState([]);
+
     useEffect(() => {
+        const fetchDepts = async () => {
+            try {
+                const res = await axios.get('http://localhost:3001/api/departments'); // We made this public/auth-available earlier
+                if (res.data.success) setDepartments(res.data.data);
+            } catch (e) { console.error("Failed to load departments"); }
+        };
+        fetchDepts();
         fetchAssets();
     }, [selectedDept]);
 
@@ -82,16 +91,25 @@ const AssetsPage = () => {
 
                 {/* Categories / Departments Tabs */}
                 <div className="flex overflow-x-auto gap-2 pb-6 mb-2 no-scrollbar">
-                    {['All', 'Physics', 'Computer Science', 'Chemistry', 'Media', 'Engineering'].map(dept => (
+                    <button
+                        onClick={() => setSelectedDept('All')}
+                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedDept === 'All'
+                            ? 'bg-primary text-white shadow-md'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        All
+                    </button>
+                    {departments.map(dept => (
                         <button
-                            key={dept}
-                            onClick={() => setSelectedDept(dept)}
-                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedDept === dept
-                                    ? 'bg-primary text-white shadow-md'
-                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            key={dept._id}
+                            onClick={() => setSelectedDept(dept.name)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedDept === dept.name
+                                ? 'bg-primary text-white shadow-md'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                 }`}
                         >
-                            {dept}
+                            {dept.name}
                         </button>
                     ))}
                 </div>
@@ -122,8 +140,8 @@ const AssetsPage = () => {
                                     )}
                                     <div className="absolute top-2 right-2">
                                         <span className={`px-2 py-1 text-xs font-bold rounded-md uppercase tracking-wide ${asset.status === 'Available' ? 'bg-emerald-100 text-emerald-700' :
-                                                asset.status === 'In Use' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-red-100 text-red-700'
+                                            asset.status === 'In Use' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-red-100 text-red-700'
                                             }`}>
                                             {asset.status}
                                         </span>
@@ -135,8 +153,12 @@ const AssetsPage = () => {
                                     <h3 className="font-bold text-gray-900 mb-1 truncate">{asset.name}</h3>
                                     <p className="text-xs text-primary font-semibold mb-2 uppercase">{asset.category?.name || 'Equipment'}</p>
 
-                                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                                         <span className="truncate">{asset.location}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                                        <span className="bg-gray-100 px-2 py-1 rounded">Qty: {asset.availableQuantity} / {asset.totalQuantity}</span>
+                                        <span>Cond: {asset.condition}</span>
                                     </div>
 
                                     <div className="border-t border-gray-100 pt-3 flex justify-between items-center">

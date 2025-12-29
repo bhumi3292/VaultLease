@@ -11,7 +11,7 @@ const RegisterPage = () => {
         universityId: '',
         email: '',
         phoneNumber: '',
-        role: 'STUDENT', // Default
+        role: 'REQUESTER', // Default
         department: '', // Required for Administrator
         password: '',
         confirmPassword: ''
@@ -107,7 +107,7 @@ const RegisterPage = () => {
                         <label className="text-xs font-semibold text-gray-500 uppercase">Role</label>
                         <select name="role" value={formData.role} onChange={handleChange}
                             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg border">
-                            <option value="STUDENT">Requester (Student / Faculty)</option>
+                            <option value="REQUESTER">Requester (Student / Faculty)</option>
                             <option value="ADMINISTRATOR">Administrator (Staff / Lab Tech)</option>
                         </select>
                     </div>
@@ -125,7 +125,7 @@ const RegisterPage = () => {
                     )}
 
                     {/* Passwords */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="relative">
                             <label className="text-xs font-semibold text-gray-500 uppercase">Password</label>
                             <div className="relative mt-1">
@@ -133,6 +133,32 @@ const RegisterPage = () => {
                                 <input name="password" type="password" required value={formData.password} onChange={handleChange}
                                     className="pl-10 block w-full border-gray-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm py-2 border" placeholder="••••••••" />
                             </div>
+                            {/* Strength Meter */}
+                            {formData.password && (
+                                <div className="mt-2">
+                                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full transition-all duration-300 ${(() => {
+                                                    let s = 0;
+                                                    if (formData.password.length >= 10) s++;
+                                                    if (/[A-Z]/.test(formData.password)) s++;
+                                                    if (/[a-z]/.test(formData.password)) s++;
+                                                    if (/[0-9]/.test(formData.password)) s++;
+                                                    if (/[^A-Za-z0-9]/.test(formData.password)) s++;
+
+                                                    if (s <= 2) return 'bg-red-500 w-1/4';
+                                                    if (s <= 3) return 'bg-yellow-500 w-2/4';
+                                                    if (s <= 4) return 'bg-blue-500 w-3/4';
+                                                    return 'bg-green-500 w-full';
+                                                })()
+                                                }`}
+                                        ></div>
+                                    </div>
+                                    <p className="text-xs mt-1 text-gray-500">
+                                        Must have 10+ chars, Upper, Lower, Number, Symbol.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <div className="relative">
                             <label className="text-xs font-semibold text-gray-500 uppercase">Confirm</label>
