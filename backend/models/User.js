@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
 
     role: {
         type: String,
-        enum: ["ADMIN", "ADMINISTRATOR", "STUDENT"], // ADMIN = Super Admin, ADMINISTRATOR = Staff, STUDENT = Requester
+        enum: ["ADMIN", "ADMINISTRATOR", "REQUESTER"], // ADMIN = Super Admin, ADMINISTRATOR = Staff, REQUESTER = Student/Faculty
         required: true,
     },
 
@@ -88,6 +88,10 @@ const userSchema = new mongoose.Schema({
     },
     otpExpires: {
         type: Date
+    },
+    isMFAEnabled: {
+        type: Boolean,
+        default: false
     }
 
 }, { timestamps: true });
@@ -117,14 +121,14 @@ userSchema.pre("save", async function (next) {
                     for (const historyHash of oldUser.passwordHistory) {
                         const isReuse = await bcrypt.compare(this.password, historyHash);
                         if (isReuse) {
-                            throw new Error("Password cannot be one of the last 3 used passwords.");
+                            throw new Error("Password cannot be one of the last 5 used passwords.");
                         }
                     }
                 }
 
                 // 3. Update history: [oldPassword, ...oldHistory].slice(0, 3)
                 let newHistory = [oldUser.password, ...(oldUser.passwordHistory || [])];
-                if (newHistory.length > 3) newHistory = newHistory.slice(0, 3);
+                if (newHistory.length > 5) newHistory = newHistory.slice(0, 5);
                 this.passwordHistory = newHistory;
             }
         }

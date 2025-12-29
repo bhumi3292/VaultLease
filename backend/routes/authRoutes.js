@@ -43,18 +43,19 @@ const upload = multer({
     // }
 });
 
-const { loginRateLimiter, otpRateLimiter } = require("../middlewares/rateLimiter");
+const { loginLimiter, otpLimiter } = require("../middlewares/rateLimiter");
 
 // ===============================================
 // --- Existing Authentication Routes ---
-router.post("/login", loginRateLimiter, authController.loginUser);
-router.post("/verify-otp", loginRateLimiter, authController.verifyLoginOtp);
+router.post("/login", loginLimiter, authController.loginUser);
+router.post("/verify-otp", otpLimiter, authController.verifyLoginOtp);
+router.post("/logout", authenticateUser, authController.logoutUser);
 router.post("/register", authController.registerUser);
 router.post("/find-user-id", authController.findUserIdByCredentials);
 
 // Password Reset Routes
-router.post("/request-reset/send-link", otpRateLimiter, authController.sendPasswordResetLink);
-router.post("/reset-password/:token", otpRateLimiter, authController.resetPassword);
+router.post("/request-reset/send-link", otpLimiter, authController.sendPasswordResetLink);
+router.post("/reset-password/:token", otpLimiter, authController.resetPassword);
 
 // Get Current User Route (Protected)
 router.get("/me", authenticateUser, authController.getMe);
