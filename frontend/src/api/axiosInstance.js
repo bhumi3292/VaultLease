@@ -9,6 +9,7 @@ export const API_URL = VITE_BACKEND_URL;
 // Create an Axios instance with a base URL
 const instance = axios.create({
     baseURL: API_URL,
+    withCredentials: true, // Send cookies with requests
     timeout: 10000, // Request timeout
 });
 
