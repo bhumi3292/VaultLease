@@ -1,43 +1,42 @@
-const Category = require("../../models/Category");
+const Department = require("../../models/Department");
 
 exports.createCategory = async (req, res) => {
     try {
-        const { name, types } = req.body;
+        const { name } = req.body;
 
         if (!name) {
-            return res.status(400).json({ success: false, message: "Name is required" });
+            return res.status(400).json({ success: false, message: "Department Name is required" });
         }
 
-        const exists = await Category.findOne({ category_name: name });
+        const exists = await Department.findOne({ department_name: name });
         if (exists) {
-            return res.status(400).json({ success: false, message: "Category already exists" });
+            return res.status(400).json({ success: false, message: "Department already exists" });
         }
 
-        const category = await Category.create({
-            category_name: name,
-            types: Array.isArray(types) ? types : []
+        const category = await Department.create({
+            department_name: name
         });
 
-        res.status(201).json({ success: true, message: "Category created", data: category });
+        res.status(201).json({ success: true, message: "Department created", data: category });
     } catch (err) {
-        console.error("Create category error:", err);
+        console.error("Create department error:", err);
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 exports.getCategories = async (req, res) => {
     try {
-        const categories = await Category.find().sort({ createdAt: -1 });
-        res.status(200).json({ success: true, data: categories });
+        const departments = await Department.find().sort({ createdAt: -1 });
+        res.status(200).json({ success: true, data: departments });
     } catch (err) {
-        console.error("Get categories error:", err);
+        console.error("Get departments error:", err);
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 exports.getCategoryById = async (req, res) => {
     try {
-        const category = await Category.findById(req.params.id);
+        const category = await Department.findById(req.params.id);
         if (!category) {
             return res.status(404).json({ success: false, message: "Category not found" });
         }
@@ -50,13 +49,12 @@ exports.getCategoryById = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
     try {
-        const { name, types } = req.body;
+        const { name } = req.body;
 
         const updateData = {};
-        if (name) updateData.category_name = name;
-        if (Array.isArray(types)) updateData.types = types;
+        if (name) updateData.department_name = name; // Map 'name' to 'department_name'
 
-        const updated = await Category.findByIdAndUpdate(
+        const updated = await Department.findByIdAndUpdate(
             req.params.id,
             updateData,
             { new: true }
@@ -75,7 +73,7 @@ exports.updateCategory = async (req, res) => {
 
 exports.deleteCategory = async (req, res) => {
     try {
-        const deleted = await Category.findByIdAndDelete(req.params.id);
+        const deleted = await Department.findByIdAndDelete(req.params.id);
         if (!deleted) {
             return res.status(404).json({ success: false, message: "Category not found" });
         }
