@@ -24,6 +24,7 @@ const app = express(); // Initialize Express app
 // ========== Security Middleware ==========
 
 app.use(cookieParser()); // Parse cookies
+app.disable('x-powered-by'); // Hide Express signature
 
 // CORS must be first for browser to see access control headers
 app.use(cors({
