@@ -79,6 +79,21 @@ const userSchema = new mongoose.Schema({
     isMFAEnabled: {
         type: Boolean,
         default: false
+    },
+
+    lastLoginIp: {
+        type: String,
+        default: null
+    },
+
+    lastLoginUserAgent: {
+        type: String,
+        default: null
+    },
+
+    tokenVersion: {
+        type: Number,
+        default: 0
     }
 
 }, { timestamps: true });
