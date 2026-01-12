@@ -35,7 +35,7 @@ export default function UpdatePropertyForm() {
         const fetchCategories = async () => {
             try {
                 const response = await getCategoriesApi();
-                setCategories(response.data.data);
+                setCategories(response.data.data || response.data.categories || []);
             } catch (error) {
                 toast.error('Failed to load categories.');
             }
@@ -89,7 +89,7 @@ export default function UpdatePropertyForm() {
                     navigate("/property");
                 },
                 onError: (err) => {
-                    toast.error(err.response?.data?.message || "Failed to update asset.");
+                    toast.error(err.response?.data?.message || "Failed to update property.");
                 }
             });
         }
@@ -116,16 +116,16 @@ export default function UpdatePropertyForm() {
 
 
     if (isPropertyLoading) {
-        return <div className="max-w-4xl mx-auto p-8 text-center">Loading asset data...</div>;
+        return <div className="max-w-4xl mx-auto p-8 text-center">Loading property data...</div>;
     }
 
     if (isPropertyError) {
-        return <div className="max-w-4xl mx-auto p-8 text-center text-red-600">Error: {propertyError.message || "Failed to load asset data."}</div>;
+        return <div className="max-w-4xl mx-auto p-8 text-center text-red-600">Error: {propertyError.message || "Failed to load property data."}</div>;
     }
 
     return (
         <div className="max-w-4xl mx-auto bg-white p-8 shadow-xl rounded-2xl mt-8 mb-12">
-            <h2 className="text-2xl font-bold text-[#003366] mb-6">Update Asset</h2>
+            <h2 className="text-2xl font-bold text-[#003366] mb-6">Update Property</h2>
             <form onSubmit={formik.handleSubmit} className="flex flex-col gap-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col"><label htmlFor="title" className="font-medium">Title</label><input type="text" id="title" name="title" {...formik.getFieldProps('title')} className="p-3 border rounded bg-gray-100" />{formik.touched.title && formik.errors.title && <p className="text-red-600 text-sm mt-1">{formik.errors.title}</p>}</div>
@@ -140,7 +140,7 @@ export default function UpdatePropertyForm() {
                     <label htmlFor="categoryId" className="block font-medium">Category</label>
                     <select id="categoryId" name="categoryId" {...formik.getFieldProps('categoryId')} className="w-full p-3 border rounded bg-gray-100">
                         <option value="">Select Category</option>
-                        {categories.map(c => <option key={c._id} value={c._id}>{c.category_name}</option>)}
+                        {categories.map(c => <option key={c._id} value={c._id}>{c.department_name || c.departmentName || c.category_name}</option>)}
                     </select>
                     {formik.touched.categoryId && formik.errors.categoryId && <p className="text-red-600 text-sm mt-1">{formik.errors.categoryId}</p>}
                 </div>
@@ -186,7 +186,7 @@ export default function UpdatePropertyForm() {
 
                 {/* Submit Button */}
                 <button type="submit" disabled={isUpdating} className="bg-[#002B5B] text-white font-bold py-3 rounded-lg hover:bg-[#001f40] transition disabled:opacity-50">
-                    {isUpdating ? 'Updating...' : 'Update Asset'}
+                    {isUpdating ? 'Updating...' : 'Update Property'}
                 </button>
             </form>
             <ToastContainer position="bottom-right" autoClose={3000} />
