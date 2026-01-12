@@ -36,7 +36,8 @@ app.use(helmet({
 }));
 
 // Prevent XSS attacks
-// REMOVED XSS-CLEAN completely
+// REMOVED XSS-CLEAN completely - relying on React's auto-escaping and Helmet
+// Security Audit: Confirmed Helmet is active for header protection
 
 // Sanitize data (NoSQL injection prevention)
 
@@ -48,8 +49,8 @@ app.use(hpp());
 
 // Rate Limiting
 const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 100, // Limit each IP to 100 requests per 10 mins
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 1000, // Limit each IP to 1000 requests per minute (relaxed for dev)
     standardHeaders: true,
     legacyHeaders: false,
     message: "Too many requests from this IP, please try again later."
