@@ -148,34 +148,82 @@ exports.loginUser = async (req, res) => {
             });
         }
 
-        // 5. Generate OTP
-        // Generate 6-digit OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        // Hash OTP before saving (optional but good practice, here we save plain for simplicity or hash it)
-        // For strict security, hash it. Here we will save it directly but expire quickly.
-        user.otp = otpCode;
-        user.otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
-        await user.save();
+        // --- SESSION ANOMALY DETECTION ---
+        const currentIp = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const currentUserAgent = req.headers['user-agent'];
+        let isAnomaly = false;
 
-        // 5. Send OTP via Email
-        const subject = "VaultLease Login OTP";
-        const text = `Your OTP for login is: ${otpCode}. It expires in 5 minutes.`;
-        const html = `<p>Your OTP for VaultLease login is: <b>${otpCode}</b></p><p>It expires in 5 minutes.</p>`;
-
-        try {
-            await sendEmail(user.email, subject, text, html);
-        } catch (emailErr) {
-            console.error("Failed to send OTP email:", emailErr);
-            return res.status(500).json({ success: false, message: "Failed to send OTP. Please try again." });
+        // Check for anomalies if previous login data exists
+        if (user.lastLoginIp && user.lastLoginIp !== currentIp) {
+            console.warn(`[SECURITY ALERT] IP Anomaly for user ${user.email}. Prev: ${user.lastLoginIp}, Curr: ${currentIp}`);
+            isAnomaly = true;
+            await createAuditLog(user._id, 'SECURITY_ALERT', req, `IP Address Change Detected from ${user.lastLoginIp} to ${currentIp}`);
         }
 
-        // 6. Return response indicating OTP sent (Do NOT send token yet)
-        return res.status(200).json({
+        // --- ROLE-BASED MFA & ANOMALY ENFORCEMENT ---
+        // Admin/Administrator MUST use MFA. Students use MFA if enabled or if anomaly detected.
+        const isAdmin = ["Admin", "Administrator", "ADMIN", "ADMINISTRATOR"].includes(user.role);
+        const requiresMfa = isAdmin || user.isMFAEnabled || isAnomaly;
+
+        if (requiresMfa) {
+            // 5. Generate OTP
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            user.otp = otpCode;
+            user.otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
+            await user.save();
+
+            // Send OTP via Email
+            const subject = "VaultLease Login OTP";
+            const text = `Your OTP for login is: ${otpCode}. It expires in 5 minutes.`;
+            const html = `<p>Your OTP for VaultLease login is: <b>${otpCode}</b></p><p>It expires in 5 minutes.</p>`;
+
+            try {
+                await sendEmail(user.email, subject, text, html);
+            } catch (emailErr) {
+                console.error("Failed to send OTP email:", emailErr);
+                return res.status(500).json({ success: false, message: "Failed to send OTP. Please try again." });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: isAnomaly ? "Unusual activity detected. OTP sent to email." : "OTP sent to your email. Please verify.",
+                requiresOtp: true,
+                userId: user._id,
+                email: user.email
+            });
+        }
+
+        // NO MFA REQUIRED: Issue Token Directly (Existing Flow Logic)
+        const payload = {
+            _id: user._id,
+            email: user.email,
+            role: user.role,
+            tokenVersion: user.tokenVersion // Include token version
+        };
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
+        const { password: _, ...userWithoutPassword } = user.toObject();
+
+        // Update Session Info
+        user.lastLoginIp = currentIp;
+        user.lastLoginUserAgent = currentUserAgent;
+        await user.save();
+
+        const loginTime = new Date().toLocaleString();
+        await createAuditLog(user._id, 'LOGIN', req, `User logged in directly at ${loginTime}`);
+
+        const options = {
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+        };
+
+        return res.status(200).cookie('token', token, options).json({
             success: true,
-            message: "OTP sent to your email. Please verify.",
-            requiresOtp: true,
-            userId: user._id, // Send ID so frontend can pass it to verify endpoint (or use email)
-            email: user.email
+            message: "Login successful",
+            user: userWithoutPassword
         });
 
     } catch (err) {
@@ -217,14 +265,21 @@ exports.verifyOtp = async (req, res) => {
         const payload = {
             _id: user._id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            tokenVersion: user.tokenVersion // Include token version
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
         const { password: _, ...userWithoutPassword } = user.toObject();
 
+        // Update Session Info
+        user.lastLoginIp = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        user.lastLoginUserAgent = req.headers['user-agent'];
+        await user.save();
+
         // Log Successful Login
-        await createAuditLog(user._id, 'LOGIN', req, 'User logged in via OTP');
+        const loginTime = new Date().toLocaleString();
+        await createAuditLog(user._id, 'LOGIN', req, `User logged in via OTP at ${loginTime}`);
 
         // Set secure cookie
         const options = {
@@ -280,7 +335,12 @@ exports.logoutUser = async (req, res) => {
     // The frontend handles token removal.
     // user property should be available if authenticated middleware is used
     if (req.user) {
-        await createAuditLog(req.user._id, 'LOGOUT', req, 'User logged out');
+        // Invalidate tokens by incrementing version
+        req.user.tokenVersion = (req.user.tokenVersion || 0) + 1;
+        await req.user.save();
+
+        const logoutTime = new Date().toLocaleString();
+        await createAuditLog(req.user._id, 'LOGOUT', req, `User logged out at ${logoutTime}`);
     }
     return res.status(200).json({ success: true, message: "Logged out successfully" });
 };
