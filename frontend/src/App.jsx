@@ -25,7 +25,7 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <AuthContextProvider>
-                <Router>
+                <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <Navbar />
                     {/* Main content area, pushed down by fixed Navbar */}
                     <div className="pt-[70px] min-h-screen flex flex-col">

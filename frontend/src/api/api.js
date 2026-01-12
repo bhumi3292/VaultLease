@@ -7,7 +7,7 @@ export const API_URL = VITE_BACKEND_URL;
 
 const instance = axios.create({
     baseURL: API_URL,
-
+    withCredentials: true, // Send cookies with requests
 });
 
 // Request interceptor to attach token
@@ -40,12 +40,16 @@ instance.interceptors.response.use(
         const originalRequest = error.config;
 
         // Check for 401 Unauthorized, often indicating token issues
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // We exclude /api/auth/me because that endpoint is hit on app load to check status.
+        // If it returns 401, it just means user is not logged in, so we shouldn't redirect/reload.
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/api/auth/me')) {
             originalRequest._retry = true;
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             toast.error("Session expired or unauthorized. Please log in again.");
-            window.location.href = '/login'; // Redirect to login
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login'; // Redirect to login
+            }
         }
         // Handle other common errors
         else if (error.response?.status === 400) {

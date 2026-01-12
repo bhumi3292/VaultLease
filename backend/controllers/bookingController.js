@@ -4,7 +4,7 @@ const User = require('../models/User');
 
 // SECURITY NOTE: This controller is protected by 'sensitiveLimiter' rate limiting middleware.
 // See middlewares/apiLimiter.js for configuration.
-const createBooking = async (req, res) => {
+exports.createBooking = async (req, res) => {
     try {
         const { property: propertyId } = req.body;
         const tenantId = req.user.id;

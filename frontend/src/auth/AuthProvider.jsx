@@ -1,6 +1,6 @@
 // src/auth/AuthProvider.jsx
-import React from 'react';
-import { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect } from "react";
+import { getAuthUserApi } from '../api/authApi';
 
 export const AuthContext = createContext(null);
 
@@ -8,17 +8,18 @@ const AuthContextProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const login = (userData, token) => {
+    const login = (userData) => {
         setLoading(true);
         try {
-            if (userData && token) {
+            if (userData) {
+                // We no longer store token in localStorage manually.
+                // It is handled by HTTP-only cookie.
                 localStorage.setItem("user", JSON.stringify(userData));
-                localStorage.setItem("token", token);
                 setUser(userData);
-                console.log("AuthContext: User logged in, setting user state to:", userData);
+                console.log("AuthContext: User logged in (cookie-based), setting user state to:", userData);
             }
         } catch (error) {
-            console.error("AuthContext: Failed to save user data to localStorage:", error);
+            console.error("AuthContext: Error in login:", error);
         } finally {
             setLoading(false);
         }
@@ -27,38 +28,42 @@ const AuthContextProvider = ({ children }) => {
     const logout = () => {
         setLoading(true);
         localStorage.removeItem("user");
-        localStorage.removeItem("token");
+        // No need to remove token manually, backend handles cookie clearance.
         setUser(null);
-        console.log("AuthContext: User logged out, user state set to null.");
+        console.log("AuthContext: User logged out locally.");
         setLoading(false);
     };
 
     useEffect(() => {
-        setLoading(true);
-        const storedToken = localStorage.getItem("token");
-        const storedUserString = localStorage.getItem("user");
-
-        let parsedUser = null;
-
-        if (storedToken && storedToken !== "undefined" && storedUserString && storedUserString !== "undefined") {
+        const checkAuth = async () => {
+            setLoading(true);
             try {
-                parsedUser = JSON.parse(storedUserString);
-                setUser(parsedUser);
-                console.log("AuthContext: Initial load, user and token found. Setting user state.");
-            } catch (error) {
-                console.error("AuthContext: Error parsing user data from localStorage:", error);
-                localStorage.removeItem("user");
-                localStorage.removeItem("token");
-                setUser(null);
-            }
-        } else {
-            setUser(null);
-            localStorage.removeItem("user");
-            localStorage.removeItem("token");
-            console.log("AuthContext: Initial load, no valid user/token found in localStorage.");
-        }
+                // Try to restore user from localStorage first for speed
+                const storedUserString = localStorage.getItem("user");
+                if (storedUserString) {
+                    setUser(JSON.parse(storedUserString));
+                }
 
-        setLoading(false);
+                // Verify with backend
+                // This ensures the HTTP-only cookie is valid
+                const { data } = await getAuthUserApi();
+                if (data && data.success) {
+                    setUser(data.user);
+                    localStorage.setItem("user", JSON.stringify(data.user)); // Keep local text in sync
+                    console.log("AuthContext: Session verified with backend.");
+                } else {
+                    throw new Error("Session verification failed");
+                }
+            } catch (error) {
+                console.error("AuthContext: Session invalid/expired.", error);
+                localStorage.removeItem("user");
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAuth();
     }, []);
 
     return (

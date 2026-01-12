@@ -98,8 +98,10 @@ export default function LoginForm() {
             const response = await verifyOtpApi({ userId: tempUser.userId, otp: otpCode });
             const data = response.data;
 
-            if (data.success && data.token) {
-                login(data.user, data.token);
+            if (data.success) {
+                // Token is now in HTTP-Only cookie, so we don't need to pass it manually.
+                // Just update the user state in context.
+                login(data.user);
                 toast.success("Login successful!");
                 setTimeout(() => navigate("/"), 500);
             } else {
