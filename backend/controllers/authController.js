@@ -47,6 +47,15 @@ exports.registerUser = async (req, res) => {
         return res.status(403).json({ success: false, message: "Admin account cannot be created via signup." });
     }
 
+    // Password Complexity Check
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+            success: false,
+            message: "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
+        });
+    }
+
     try {
         console.log("Registering user:", email);
         const existingUser = await User.findOne({ email });
@@ -222,7 +231,8 @@ exports.verifyOtp = async (req, res) => {
             expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
             httpOnly: true, // Prevent client-side JS access
             secure: process.env.NODE_ENV === 'production', // Only secure in prod
-            sameSite: 'lax' // CSRF protection
+            sameSite: 'lax', // CSRF protection
+            path: '/' // Explicitly set path to root to avoid path-scoping issues
         };
 
         return res.status(200).cookie('token', token, options).json({
