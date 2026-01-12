@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema({
         default: 0
     },
 
+    lockUntil: {
+        type: Date
+    },
+
     passwordChangedAt: {
         type: Date
     },

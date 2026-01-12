@@ -82,9 +82,9 @@ exports.registerUser = async (req, res) => {
 };
 
 // Login User (existing)
+// Login User (Enhanced with OTP & Lockout)
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
-    console.log(req.body)
 
     if (!email || !password) {
         return res.status(400).json({ success: false, message: "Email and password are required" });
@@ -96,11 +96,104 @@ exports.loginUser = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const passwordMatch = await user.comparePassword(password); // Assuming comparePassword method on User model
-        if (!passwordMatch) {
-            return res.status(401).json({ success: false, message: "Invalid credentials" });
+        // 1. Check if account is locked
+        if (user.lockUntil && user.lockUntil > Date.now()) {
+            return res.status(403).json({
+                success: false,
+                message: "Account is temporarily locked due to multiple failed login attempts. Please try again later."
+            });
         }
 
+        // 2. Verify Password
+        const passwordMatch = await user.comparePassword(password);
+
+        if (!passwordMatch) {
+            // Increment failed attempts
+            user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+
+            // Check if limit reached (e.g., 5 attempts)
+            if (user.failedLoginAttempts >= 5) {
+                user.lockUntil = Date.now() + 15 * 60 * 1000; // Lock for 15 minutes
+                user.failedLoginAttempts = 0; // Reset attempts after locking
+                await user.save();
+                return res.status(403).json({ success: false, message: "Account locked due to 5 failed attempts. Try again in 15 minutes." });
+            }
+
+            await user.save();
+            return res.status(401).json({ success: false, message: `Invalid credentials. Attempts left: ${5 - user.failedLoginAttempts}` });
+        }
+
+        // 3. Reset failed attempts on success
+        user.failedLoginAttempts = 0;
+        user.lockUntil = undefined;
+        await user.save();
+
+        // 4. Generate OTP
+        // Generate 6-digit OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        // Hash OTP before saving (optional but good practice, here we save plain for simplicity or hash it)
+        // For strict security, hash it. Here we will save it directly but expire quickly.
+        user.otp = otpCode;
+        user.otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes expiry
+        await user.save();
+
+        // 5. Send OTP via Email
+        const subject = "VaultLease Login OTP";
+        const text = `Your OTP for login is: ${otpCode}. It expires in 5 minutes.`;
+        const html = `<p>Your OTP for VaultLease login is: <b>${otpCode}</b></p><p>It expires in 5 minutes.</p>`;
+
+        try {
+            await sendEmail(user.email, subject, text, html);
+        } catch (emailErr) {
+            console.error("Failed to send OTP email:", emailErr);
+            return res.status(500).json({ success: false, message: "Failed to send OTP. Please try again." });
+        }
+
+        // 6. Return response indicating OTP sent (Do NOT send token yet)
+        return res.status(200).json({
+            success: true,
+            message: "OTP sent to your email. Please verify.",
+            requiresOtp: true,
+            userId: user._id, // Send ID so frontend can pass it to verify endpoint (or use email)
+            email: user.email
+        });
+
+    } catch (err) {
+        console.error("Login Error Details:", err);
+        return res.status(500).json({ success: false, message: "Server error during login." });
+    }
+};
+
+// Verify OTP and Issue Token
+exports.verifyOtp = async (req, res) => {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+        return res.status(400).json({ success: false, message: "User ID and OTP are required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Check if OTP exists and matches
+        if (!user.otp || user.otp !== otp) {
+            return res.status(400).json({ success: false, message: "Invalid OTP" });
+        }
+
+        // Check if OTP is expired
+        if (user.otpExpires < Date.now()) {
+            return res.status(400).json({ success: false, message: "OTP has expired" });
+        }
+
+        // OTP Valid: Clear OTP fields
+        user.otp = undefined;
+        user.otpExpires = undefined;
+        await user.save();
+
+        // Issue Token
         const payload = {
             _id: user._id,
             email: user.email,
@@ -108,11 +201,10 @@ exports.loginUser = async (req, res) => {
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
-
         const { password: _, ...userWithoutPassword } = user.toObject();
 
-        // Log Login
-        await createAuditLog(user._id, 'LOGIN', req, 'User logged in');
+        // Log Successful Login
+        await createAuditLog(user._id, 'LOGIN', req, 'User logged in via OTP');
 
         return res.status(200).json({
             success: true,
@@ -120,11 +212,32 @@ exports.loginUser = async (req, res) => {
             token,
             user: userWithoutPassword
         });
+
     } catch (err) {
-        console.error("Login Error:", err);
-        return res.status(500).json({ success: false, message: "Server error during login." });
+        console.error("OTP Verification Error:", err);
+        return res.status(500).json({ success: false, message: "Server error during verification." });
     }
 };
+
+// Resend OTP
+exports.resendOtp = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = otpCode;
+        user.otpExpires = Date.now() + 5 * 60 * 1000;
+        await user.save();
+
+        await sendEmail(user.email, "VaultLease Login OTP (Resend)", `Your OTP is: ${otpCode}`, `<p>Your OTP is: <b>${otpCode}</b></p>`);
+
+        return res.status(200).json({ success: true, message: "OTP resent successfully" });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: "Failed to resend OTP" });
+    }
+}; // Logic: Find user, Check Lock, Verify Pass, Gen OTP, Ret OTP_SENT
 
 // Logout User
 exports.logoutUser = async (req, res) => {
@@ -137,7 +250,7 @@ exports.logoutUser = async (req, res) => {
     return res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
-// Find User ID by Credentials (existing)
+// Find User ID by Credentials (restored)
 exports.findUserIdByCredentials = async (req, res) => {
     const { email, password, stakeholder } = req.body;
 

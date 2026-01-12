@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
 const Property = require("../models/Property");
 
+const User = require("../models/User");
+
 // Define authenticateUser function
-const authenticateUser = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -13,7 +15,15 @@ const authenticateUser = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
+
+        // Security enhancement: Check if user actually exists
+        const user = await User.findById(decoded._id || decoded.id).select('-password');
+
+        if (!user) {
+            return res.status(401).json({ success: false, message: "User belonging to this token no longer exists" });
+        }
+
+        req.user = user; // Attach full user object
         next();
     } catch (err) {
         if (err.name === "TokenExpiredError") {
@@ -22,6 +32,7 @@ const authenticateUser = (req, res, next) => {
         if (err.name === "JsonWebTokenError") {
             return res.status(401).json({ success: false, message: "Invalid token. Please login again." });
         }
+        console.error("Auth Middleware Error:", err);
         return res.status(401).json({ success: false, message: "Authentication failed." });
     }
 };

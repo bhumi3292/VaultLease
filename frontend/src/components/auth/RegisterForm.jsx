@@ -218,6 +218,44 @@ export default function RegisterForm() {
                         />
                     </div>
 
+                    {/* Password Strength Meter */}
+                    {formik.values.password && (
+                        <div className="space-y-1 mt-1 animate-in fade-in slide-in-from-top-1">
+                            <div className="flex gap-1 h-1.5 w-full">
+                                {[...Array(4)].map((_, i) => {
+                                    const strength = (
+                                        (formik.values.password.length > 7 ? 1 : 0) +
+                                        (/[A-Z]/.test(formik.values.password) ? 1 : 0) +
+                                        (/[0-9]/.test(formik.values.password) ? 1 : 0) +
+                                        (/[^A-Za-z0-9]/.test(formik.values.password) ? 1 : 0)
+                                    );
+                                    let color = "bg-gray-200";
+                                    if (strength > i) {
+                                        if (strength <= 2) color = "bg-red-400";
+                                        else if (strength === 3) color = "bg-yellow-400";
+                                        else color = "bg-green-500";
+                                    }
+                                    return (
+                                        <div key={i} className={`h-full flex-1 rounded-full transition-all duration-300 ${color}`} />
+                                    );
+                                })}
+                            </div>
+                            <p className="text-xs text-right text-gray-500 font-medium">
+                                {(() => {
+                                    const strength = (
+                                        (formik.values.password.length > 7 ? 1 : 0) +
+                                        (/[A-Z]/.test(formik.values.password) ? 1 : 0) +
+                                        (/[0-9]/.test(formik.values.password) ? 1 : 0) +
+                                        (/[^A-Za-z0-9]/.test(formik.values.password) ? 1 : 0)
+                                    );
+                                    if (strength <= 2) return <span className="text-red-500">Weak</span>;
+                                    if (strength === 3) return <span className="text-yellow-600">Moderate</span>;
+                                    return <span className="text-green-600">Strong</span>;
+                                })()}
+                            </p>
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         disabled={isPending}

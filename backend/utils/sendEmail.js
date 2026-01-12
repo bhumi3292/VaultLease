@@ -35,6 +35,18 @@ const sendEmail = async (to, subject, text, html) => {
         return info;
     } catch (error) {
         console.error('Error sending email:', error);
+        // In development, if email fails (likely due to missing credentials), 
+        // fallback to logging the content so the developer can still proceed.
+        if (process.env.NODE_ENV !== 'production') {
+            console.log("=================================================");
+            console.log("             FALLBACK EMAIL LOGGER               ");
+            console.log("=================================================");
+            console.log(`To: ${to}`);
+            console.log(`Subject: ${subject}`);
+            console.log(`Body: ${text}`);
+            console.log("=================================================");
+            return { messageId: 'fallback-log' };
+        }
         throw new Error('Failed to send email.');
     }
 };

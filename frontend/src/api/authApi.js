@@ -9,6 +9,14 @@ export const loginUserApi = async (credentials) => {
     return await api.post('/api/auth/login', credentials);
 };
 
+export const verifyOtpApi = async (data) => {
+    return await api.post('/api/auth/verify-otp', data);
+};
+
+export const resendOtpApi = async (data) => {
+    return await api.post('/api/auth/resend-otp', data);
+};
+
 export const getAuthUserApi = async () => {
     return await api.get('/api/auth/me');
 };

@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
-const { authenticateUser } = require("../middlewares/auth");
+const { authenticateUser } = require("../middlewares/authorizedUser");
 
 const multer = require('multer');
 const path = require('path');
@@ -27,6 +27,8 @@ const upload = multer({
 router.post("/login", authController.loginUser);
 router.post("/register", authController.registerUser);
 router.post("/find-user-id", authController.findUserIdByCredentials);
+router.post("/verify-otp", authController.verifyOtp);
+router.post("/resend-otp", authController.resendOtp);
 
 // Password Reset Routes
 router.post("/request-reset/send-link", authController.sendPasswordResetLink);

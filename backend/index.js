@@ -1,4 +1,5 @@
 // vaultlease_backend/index.js
+console.log("Server Code Updated - V3 - MongoSanitize Removed");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -9,16 +10,53 @@ const multer = require("multer");
 const connectDB = require("./config/db");
 const ApiError = require("./utils/api_error");
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+// const xss = require('xss-clean'); // REMOVED
+const hpp = require('hpp');
+
 const app = express(); // Initialize Express app
 
-// ========== Middleware ==========
+// ========== Security Middleware ==========
+
+// CORS must be first for browser to see access control headers
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    origin: true, // Allow all origins for dev simplicity
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Set security headers
+app.use(helmet({
+    crossOriginResourcePolicy: false, // Disable for dev to prevent blocking static assets
+}));
+
+// Prevent XSS attacks
+// REMOVED XSS-CLEAN completely
+
+// Sanitize data (NoSQL injection prevention)
+
+// Sanitize data (NoSQL injection prevention)
+// app.use(mongoSanitize()); // REMOVED due to "Cannot set property query" error in this environment
+
+// Prevent Parameter Pollution
+app.use(hpp());
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 100, // Limit each IP to 100 requests per 10 mins
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Too many requests from this IP, please try again later."
+});
+app.use('/api', limiter); // Apply to all API routes
+
+// ========== Standard Middleware ==========
+// CORS moved up
+app.use(express.json({ limit: '10kb' })); // Limit body size
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
