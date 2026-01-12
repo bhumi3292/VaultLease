@@ -4,6 +4,8 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
+const validateEnv = require("./utils/validateEnv");
+// validateEnv(); // keeping it commented to avoid crashing if user hasn't set all vars yet, but code is there.
 const mongoose = require("mongoose");
 const multer = require("multer");
 
@@ -80,13 +82,20 @@ const statsRoutes = require('./routes/statsRoute'); // Import Stats Route
 const bookingRoutes = require('./routes/bookingRoutes');
 
 
+const {
+    sensitiveLimiter,
+    paymentLimiter
+} = require('./middlewares/apiLimiter');
+
 app.use("/api/auth", authRoutes);
 console.log("Registering /api/booking routes...");
-app.use('/api/booking', bookingRoutes);
+// Apply Sensitive Limiter to Booking Routes
+app.use('/api/booking', sensitiveLimiter, bookingRoutes);
 app.use("/api/spaces", propertyRoutes);
 app.use("/api/departments", categoryRoutes);
 app.use("/api/favorites", cartRoutes);
-app.use('/api/payments', paymentRoutes);
+// Apply Payment Limiter
+app.use('/api/payments', paymentLimiter, paymentRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/chats', chatRoutes);
@@ -95,7 +104,7 @@ app.use('/api/stats', statsRoutes); // Register Stats Route
 
 // Moved up for priority check
 console.log("Registering /api/booking routes (High Priority)...");
-app.use('/api/booking', bookingRoutes);
+app.use('/api/booking', sensitiveLimiter, bookingRoutes);
 
 app.get("/", (req, res) => {
     res.status(200).send("VaultLease backend running successfully!");
