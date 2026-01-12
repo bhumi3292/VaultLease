@@ -25,6 +25,13 @@ const authenticateUser = async (req, res, next) => {
             return res.status(401).json({ success: false, message: "Authentication failed: User not found in database." });
         }
 
+        // Token Revocation Check
+        // If token doesn't have version (old tokens) or version mismatch, reject.
+        // Optional: Allow old tokens if user.tokenVersion is 0 (first run).
+        if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== user.tokenVersion) {
+            return res.status(401).json({ success: false, message: "Session expired. Please login again." });
+        }
+
         req.user = user;
         next();
 
