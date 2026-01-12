@@ -86,6 +86,7 @@ const userSchema = new mongoose.Schema({
 
 // ------------------------------
 // Hash Password Before Save
+// Uses bcryptjs with salt factor 10 for industry-standard encryption
 // ------------------------------
 userSchema.pre("save", async function (next) {
     if (this.isModified("password")) {
