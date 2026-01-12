@@ -32,6 +32,15 @@ export default function PaymentSelectionModal({ show, onClose, onSelectPaymentMe
                         <img src={eSewaLogo} alt="eSewa" className="h-12 mr-4" />
                         <span className="text-xl font-semibold text-gray-800">Pay with eSewa</span>
                     </button>
+
+                    <div className="border-t border-gray-200 pt-3">
+                        <button
+                            onClick={() => onSelectPaymentMethod('pay_later')}
+                            className="w-full flex items-center justify-center bg-[#008080] text-white rounded-lg p-4 hover:bg-[#006666] transition-colors duration-200 font-semibold text-lg"
+                        >
+                            Book & Pay Later / Free
+                        </button>
+                    </div>
                 </div>
 
                 <button

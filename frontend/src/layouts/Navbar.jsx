@@ -99,10 +99,12 @@ export default function Navbar() {
         { label: "Contact Us", path: "/contact" },
     ];
 
-    if (isAuthenticated && (user?.role === "Administrator" || user?.role === "ADMINISTRATOR" || user?.role === "ADMIN")) {
-        navItems.splice(2, 0, { label: "Add Asset", path: "/add-property" }); // Renamed to "Add Asset" per context, or keep "Add Property". User said "same as Add property". I will keep "Add Property" or "Add Asset" if I changed it before. Previous file view shows "Add Property".
-        // Wait, user said "add the Management in the NavBar same as Add property". This might mean add a Management link IN ADDITION TO Add Property.
-        navItems.splice(3, 0, { label: "Management", path: "/management" });
+    if (isAuthenticated && (user?.role === "Administrator" || user?.role === "ADMINISTRATOR" || user?.role === "ADMIN" || user?.role === "Admin")) {
+        navItems.splice(2, 0, { label: "Add Asset", path: "/add-property" });
+
+        if (user?.role === "ADMIN" || user?.role === "Admin") {
+            navItems.splice(3, 0, { label: "Management", path: "/management" });
+        }
     }
 
     const isActive = (path) => location.pathname === path;

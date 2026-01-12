@@ -12,10 +12,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { MapPin, Maximize2, Phone, Mail, DollarSign, User, ChevronLeft, ChevronRight, CreditCard, Calendar as CalendarIcon, MessageSquare, Box, Layers, Info } from 'lucide-react';
 
-import { useBookingModal } from '../hooks/useBookingHook.js';
 import { useKhaltiPayment } from '../hooks/payment/useKhaltiPayment.js';
-import BookingModal from '../components/bookingComponents.jsx';
-import LandlordManageAvailabilityModal from '../components/LandlordManageAvailabilityModal.jsx';
+
+
 
 import { getFullMediaUrl } from '../utils/mediaUrlHelper.js';
 import PaymentSelectionModal from "../components/payment/PaymentSelectionModal.jsx";
@@ -40,30 +39,12 @@ export default function PropertyDetail() {
     const [liked, setLiked] = useState(false);
 
     // Use the Khalti payment hook
+    // Use the Khalti payment hook
     const { initiateKhaltiPayment, isProcessingPayment } = useKhaltiPayment(
         property?._id,
         property?.title,
         property?.price
     );
-
-    const [showManageAvailabilityModal, setShowManageAvailabilityModal] = useState(false);
-
-    // Integrate the useBookingModal hook for tenant booking
-    const {
-        showBookingModal,
-        handleOpenBookingModal,
-        handleCloseBookingModal,
-        selectedDate,
-        handleDateChange,
-        currentDaySlots,
-        selectedTime,
-        handleSlotSelect,
-        handleConfirmBooking,
-        loadingAvailability,
-        isBookingLoading,
-        bookingSuccess,
-        availableSlots
-    } = useBookingModal(id, property?.landlord?._id, isAuthenticated);
 
     const [currentMediaIndex, setCurrentMediaIndex] = useState(location.state?.initialMediaIndex || 0);
 
@@ -128,45 +109,52 @@ export default function PropertyDetail() {
     };
 
     const handleEsewaPayment = () => {
-        const transaction_uuid = uuidv4();
-        const product_code = "EPAYTEST"
-        const total_amount = property?.price.toFixed(2)
-        const signed_field_names = "total_amount,transaction_uuid,product_code"
+        if (!property?.price || property.price <= 0) {
+            toast.error("Invalid asset price for payment.");
+            return;
+        }
 
-        const signingString = `total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`
-        const secret = "8gBm/:&EnhH.1/q"
+        const transaction_uuid = `${Date.now()}-${uuidv4().slice(0, 8)}`; // Unique ID
+        const product_code = "EPAYTEST";
+        const total_amount = property.price.toFixed(2);
+        const signed_field_names = "total_amount,transaction_uuid,product_code";
 
-        const signature = CryptoJS.HmacSHA256(signingString, secret).toString(CryptoJS.enc.Base64)
+        const signingString = `total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+        const secret = "8gBm/:&EnhH.1/q";
+
+        const signature = CryptoJS.HmacSHA256(signingString, secret).toString(CryptoJS.enc.Base64);
 
         const fields = {
-            amount: property?.price.toFixed(2),
+            amount: total_amount,
             tax_amount: "0",
             total_amount: total_amount,
             transaction_uuid: transaction_uuid,
             product_code: product_code,
             product_service_charge: "0",
             product_delivery_charge: "0",
-            success_url: "https://developer.esewa.com.np/success",
-            failure_url: "https://developer.esewa.com.np/failure",
+            success_url: `${window.location.origin}/payment/success?source=esewa`, // Redirect to app
+            failure_url: `${window.location.origin}/payment/failure?source=esewa`,
             signed_field_names: signed_field_names,
             signature: signature,
-        }
+        };
 
-        const form = document.createElement("form")
-        form.setAttribute("method", "POST")
-        form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form")
+        console.log("eSewa Request Fields:", fields); // Debugging
+
+        const form = document.createElement("form");
+        form.setAttribute("method", "POST");
+        form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
 
         Object.entries(fields).forEach(([key, value]) => {
-            const input = document.createElement("input")
-            input.setAttribute("type", "hidden")
-            input.setAttribute("name", key)
-            input.setAttribute("value", value)
-            form.appendChild(input)
-        })
+            const input = document.createElement("input");
+            input.setAttribute("type", "hidden");
+            input.setAttribute("name", key);
+            input.setAttribute("value", value);
+            form.appendChild(input);
+        });
 
-        document.body.appendChild(form)
-        form.submit()
-    }
+        document.body.appendChild(form);
+        form.submit();
+    };
 
     // Handle payment
     const handlePayment = () => {
@@ -178,12 +166,12 @@ export default function PropertyDetail() {
             toast.warn('Please log in to chat with the department.');
             return;
         }
-        if (!property?.landlord?._id) {
+        if (!displayLandlordId) {
             toast.error('Department contact information is missing.');
             return;
         }
         try {
-            const chat = await createOrGetChat(property.landlord._id, property._id);
+            const chat = await createOrGetChat(displayLandlordId, property._id);
             navigate('/chat', { state: { preselectChatId: chat._id } });
         } catch (err) {
             toast.error(err.message || 'Failed to start chat.');
@@ -368,7 +356,7 @@ export default function PropertyDetail() {
                                 <div className="mb-6 pb-6 border-b border-gray-100">
                                     <p className="text-sm text-gray-500 mb-1">Status</p>
                                     <h3 className={`text-2xl font-bold ${isOutOfStock ? 'text-red-500' : 'text-[#008080]'}`}>
-                                        {isOutOfStock ? 'Out of Stock' : (availableSlots?.length === 0 ? 'Unavailable' : 'Available for Lease')}
+                                        {isOutOfStock ? 'Out of Stock' : 'Available for Lease'}
                                     </h3>
                                 </div>
 
@@ -407,34 +395,17 @@ export default function PropertyDetail() {
                                     <button
                                         onClick={handlePayment}
                                         disabled={isProcessingPayment || isOutOfStock}
-                                        className={`w-full py-4 ${isOutOfStock ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#008080] hover:bg-[#005F5F]'} text-white rounded-xl font-bold shadow-lg shadow-[#008080]/20 flex items-center justify-center gap-2 transition-all transform active:scale-95 ${isProcessingPayment ? 'opacity-70 cursor-wait' : ''}`}
+                                        className={`w-full py-4 text-lg ${isOutOfStock ? 'bg-yellow-500 hover:bg-yellow-600 text-white cursor-not-allowed' : 'bg-[#008080] hover:bg-[#005F5F] text-white'} rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 ${isProcessingPayment ? 'opacity-70 cursor-wait' : ''}`}
                                     >
                                         {isOutOfStock ? (
                                             'Out of Stock'
                                         ) : (
                                             <>
-                                                <CreditCard size={20} />
-                                                {isProcessingPayment ? 'Processing...' : 'Lease / Reserve Asset'}
+                                                <CreditCard size={24} />
+                                                {isProcessingPayment ? 'Processing...' : 'Book / Lease Asset'}
                                             </>
                                         )}
                                     </button>
-
-                                    {isOwner ? (
-                                        <button
-                                            onClick={handleOpenManageAvailabilityModal}
-                                            className="w-full py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-900 font-semibold flex items-center justify-center gap-2 transition-colors"
-                                        >
-                                            <CalendarIcon size={18} /> Manage Availability
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={handleOpenBookingModal}
-                                            disabled={isOutOfStock}
-                                            className={`w-full py-3 border-2 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors ${isOutOfStock ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'}`}
-                                        >
-                                            <CalendarIcon size={18} /> Book a Visit
-                                        </button>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -447,35 +418,10 @@ export default function PropertyDetail() {
             </div>
             <ToastContainer position="bottom-right" autoClose={3000} />
 
-            {/* Booking Modal Component */}
-            {property && (
-                <BookingModal
-                    show={showBookingModal}
-                    onClose={handleCloseBookingModal}
-                    propertyTitle={displayTitle}
-                    propertyId={property._id}
-                    landlordId={displayLandlordId}
-                    isAuthenticated={isAuthenticated}
-                    selectedDate={selectedDate}
-                    handleDateChange={handleDateChange}
-                    currentDaySlots={currentDaySlots}
-                    selectedTime={selectedTime}
-                    handleSlotSelect={handleSlotSelect}
-                    handleConfirmBooking={handleConfirmBooking}
-                    loadingAvailability={loadingAvailability}
-                    isBookingLoading={isBookingLoading}
-                    bookingSuccess={bookingSuccess}
-                    availableSlots={availableSlots}
-                />
-            )}
+            {/* Booking Modal Component Removed */}
 
-            {property && (
-                <LandlordManageAvailabilityModal
-                    show={showManageAvailabilityModal}
-                    onClose={handleCloseManageAvailabilityModal}
-                    propertyId={property._id}
-                />
-            )}
+            {/* LandlordManageAvailabilityModal Component Removed */}
+
             {paymentModel && (
                 <PaymentSelectionModal
                     show={paymentModel}
@@ -484,7 +430,16 @@ export default function PropertyDetail() {
                         if (method === 'khalti') {
                             initiateKhaltiPayment();
                         } else if (method === 'esewa') {
-                            handleEsewaPayment()
+                            handleEsewaPayment();
+                        } else if (method === 'pay_later') {
+                            // Handle Pay Later / Free Booking
+                            // In a real app, this would call an API to create a 'Pending' order/booking
+                            toast.success("Asset reserved successfully! Please complete any required formalities at the University Administration.");
+                            setPaymentModel(false);
+                            // Optional: Redirect to dashboard or bookings page
+                            setTimeout(() => {
+                                // navigate('/dashboard'); // or similar
+                            }, 2000);
                         }
                     }}
                 />

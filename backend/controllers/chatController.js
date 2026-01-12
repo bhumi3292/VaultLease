@@ -10,9 +10,11 @@ exports.createOrGetChat = asyncHandler(async (req, res) => {
     const { otherUserId, propertyId } = req.body;
 
     if (!otherUserId) {
+        console.log("Chat 400: Missing otherUserId");
         return res.status(400).json({ success: false, message: "Other user ID is required." });
     }
     if (currentUserId.toString() === otherUserId.toString()) {
+        console.log("Chat 400: Self chat");
         return res.status(400).json({ success: false, message: "Cannot chat with yourself." });
     }
 
@@ -21,6 +23,7 @@ exports.createOrGetChat = asyncHandler(async (req, res) => {
         User.findById(otherUserId)
     ]);
     if (!currentUser || !otherUser) {
+        console.log("Chat 404: User not found. Current:", currentUserId, "Other:", otherUserId);
         return res.status(404).json({ success: false, message: "One or both users not found." });
     }
 
@@ -30,10 +33,16 @@ exports.createOrGetChat = asyncHandler(async (req, res) => {
     if (propertyId) {
         const property = await Property.findById(propertyId);
         if (!property) {
-            return res.status(404).json({ success: false, message: "Property not found." });
+            console.warn(`Chat Warning: Property ${propertyId} not found. Proceeding as general chat.`);
+            // query.property = propertyId; // Do not filter by property if it doesn't exist
+            // but we might want to still check if a general chat exists?
+            // For now, let's fall back to general chat logic
+            query.property = { $exists: false };
+            chatName = `Chat: ${currentUser.fullName} - ${otherUser.fullName}`;
+        } else {
+            query.property = propertyId;
+            chatName = `Chat for ${property.title}: ${currentUser.fullName} - ${otherUser.fullName}`;
         }
-        query.property = propertyId;
-        chatName = `Chat for ${property.title}: ${currentUser.fullName} - ${otherUser.fullName}`;
     } else {
         query.property = { $exists: false }; // For general direct messages not tied to a property
     }

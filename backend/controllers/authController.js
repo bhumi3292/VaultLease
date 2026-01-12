@@ -1,6 +1,5 @@
 const User = require("../models/User");
 const AuditLog = require("../models/AuditLog"); // Import AuditLog model
-const bcrypt = require("bcrypt"); // Make sure bcrypt is imported
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/sendEmail"); // Assuming this utility exists
 
@@ -10,7 +9,7 @@ const createAuditLog = async (userId, action, req, details = '') => {
         const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         const userAgent = req.headers['user-agent'];
         await AuditLog.create({
-            userId,
+            user: userId,
             action,
             ipAddress,
             userAgent,
@@ -49,6 +48,7 @@ exports.registerUser = async (req, res) => {
     }
 
     try {
+        console.log("Registering user:", email);
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ success: false, message: "Email already in use" });
@@ -64,10 +64,14 @@ exports.registerUser = async (req, res) => {
             password // User model pre-save hook should handle hashing
         });
 
+        console.log("Saving new user to database...");
         await newUser.save();
+        console.log("New user saved successfully.");
 
         // Log Registration
+        console.log("Creating audit log...");
         await createAuditLog(newUser._id, 'REGISTER', req, `User registered as ${newUser.role}`);
+        console.log("Audit log process completed.");
 
         return res.status(201).json({ success: true, message: "User registered successfully" });
     } catch (err) {

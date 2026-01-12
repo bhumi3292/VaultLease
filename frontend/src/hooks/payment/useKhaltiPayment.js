@@ -1,16 +1,16 @@
-// src/hooks/useKhaltiPayment.js
+// src/hooks/payment/useKhaltiPayment.js
 import { useState, useCallback } from 'react';
 import KhaltiCheckout from 'Khalti-Checkout-web';
 import { toast } from 'react-toastify';
-import axios from 'axios'; // Import axios for the verification call
-import { VITE_KHALTI_PUBLIC_KEY, VITE_KHALTI_SECRET_KEY } from '../../utils/env';
+import api from '../../api/api'; // Use centralized api instance
+import { VITE_KHALTI_PUBLIC_KEY } from '../../utils/env';
+
 export const useKhaltiPayment = (productId, productName, amount) => {
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [paymentError, setPaymentError] = useState(null);
 
     const KHALTI_PUBLIC_KEY = VITE_KHALTI_PUBLIC_KEY;
-    const KHALTI_SECRET_KEY = VITE_KHALTI_SECRET_KEY;
 
     const initiateKhaltiPayment = useCallback(() => {
         if (!amount || amount <= 0) {
@@ -26,38 +26,35 @@ export const useKhaltiPayment = (productId, productName, amount) => {
             publicKey: KHALTI_PUBLIC_KEY,
             productIdentity: productId,
             productName: productName,
-            productUrl: window.location.origin, // Use current origin for product URL
+            productUrl: window.location.origin,
             eventHandler: {
                 onSuccess(payload) {
                     console.log('Khalti Success Payload:', payload);
+
+                    // Prepare data for backend verification
+                    // Backend expects: token, amount, idx
                     const data = {
                         token: payload.token,
-                        amount: payload.amount, // Payload amount is in paisa
+                        amount: payload.amount,
+                        idx: payload.idx,
+                        mobile: payload.mobile,
+                        product_identity: payload.product_identity,
+                        product_name: payload.product_name,
+                        product_url: payload.product_url
                     };
 
-                    const config = {
-                        headers: {
-                            Authorization: `Secret ${KHALTI_SECRET_KEY}`, // Using 'Secret' for test keys
-                            'Content-Type': 'application/json', // Ensure content type is set
-                        },
-                    };
+                    setIsProcessingPayment(true); // Keep loading state on
 
-                    // THIS VERIFICATION SHOULD BE MOVED TO YOUR BACKEND SERVER!
-                    // Sending secret key from frontend is a security risk.
-                    axios.post("https://khalti.com/api/v2/payment/verify/", data, config)
+                    // Call Backend to Verify
+                    api.post("/api/payments/verify/khalti", data)
                         .then((response) => {
-                            console.log('Khalti Verification Response:', response.data);
-                            if (response.data.status === 'Complete') {
-                                toast.success('Payment successful!');
-                                setPaymentSuccess(true);
-                            } else {
-                                toast.error('Payment verification failed.');
-                                setPaymentError('Verification failed');
-                            }
+                            console.log('Backend Verification Response:', response.data);
+                            toast.success('Payment successful and verified!');
+                            setPaymentSuccess(true);
                         })
                         .catch((error) => {
-                            console.error('Khalti Verification Error:', error.response?.data || error.message);
-                            toast.error('Payment verification failed. Please try again.');
+                            console.error('Backend Verification Error:', error.response?.data || error.message);
+                            toast.error(error.response?.data?.message || 'Payment verification failed.');
                             setPaymentError(error.response?.data || error.message);
                         })
                         .finally(() => {
@@ -72,14 +69,18 @@ export const useKhaltiPayment = (productId, productName, amount) => {
                 },
                 onClose() {
                     console.log("Khalti widget closed.");
-                    setIsProcessingPayment(false);
+                    // Only turn off processing if we didn't succeed (success handles its own flow)
+                    // But here we rely on the modal or success state to close/redirect
+                    if (!paymentSuccess) {
+                        setIsProcessingPayment(false);
+                    }
                 },
             },
             paymentPreference: ["KHALTI", "EBANKING", "MOBILE_BANKING", "CONNECT_IPS", "SCT"],
         });
 
         checkout.show({ amount: amount * 100 }); // Khalti amount is in paisa
-    }, [productId, productName, amount, KHALTI_PUBLIC_KEY, KHALTI_SECRET_KEY]);
+    }, [productId, productName, amount, KHALTI_PUBLIC_KEY, paymentSuccess]);
 
     return { initiateKhaltiPayment, isProcessingPayment, paymentSuccess, paymentError };
 };
