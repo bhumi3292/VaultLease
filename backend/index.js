@@ -33,9 +33,14 @@ const calendarRoutes = require('./routes/calendarRoutes');
 const chatbotRoutes = require('./routes/chatbotRoute');
 const chatRoutes = require('./routes/chatRoute');
 const userRoutes = require('./routes/userRoutes');
+
 const statsRoutes = require('./routes/statsRoute'); // Import Stats Route
+const bookingRoutes = require('./routes/bookingRoutes');
+
 
 app.use("/api/auth", authRoutes);
+console.log("Registering /api/booking routes...");
+app.use('/api/booking', bookingRoutes);
 app.use("/api/spaces", propertyRoutes);
 app.use("/api/departments", categoryRoutes);
 app.use("/api/favorites", cartRoutes);
@@ -44,7 +49,11 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/stats', statsRoutes); // Use Stats Route
+app.use('/api/stats', statsRoutes); // Register Stats Route
+
+// Moved up for priority check
+console.log("Registering /api/booking routes (High Priority)...");
+app.use('/api/booking', bookingRoutes);
 
 app.get("/", (req, res) => {
     res.status(200).send("VaultLease backend running successfully!");

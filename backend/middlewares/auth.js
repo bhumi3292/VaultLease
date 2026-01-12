@@ -56,5 +56,6 @@ const requireRole = (requiredRole) => {
 
 module.exports = {
     authenticateUser,
+    protect: authenticateUser,
     requireRole,
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext, useMemo } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { getOnePropertyApi } from '../api/propertyApi';
 import { addToCartApi, removeFromCartApi, getCartApi } from '../api/cartApi';
+import { createBookingApi } from '../api/bookingApi';
 import { FaHeart, FaUniversity, FaBuilding } from 'react-icons/fa';
 import { FiHeart, FiShare2 } from 'react-icons/fi';
 import { AuthContext } from '../auth/AuthProvider';
@@ -433,13 +434,16 @@ export default function PropertyDetail() {
                             handleEsewaPayment();
                         } else if (method === 'pay_later') {
                             // Handle Pay Later / Free Booking
-                            // In a real app, this would call an API to create a 'Pending' order/booking
-                            toast.success("Asset reserved successfully! Please complete any required formalities at the University Administration.");
-                            setPaymentModel(false);
-                            // Optional: Redirect to dashboard or bookings page
-                            setTimeout(() => {
-                                // navigate('/dashboard'); // or similar
-                            }, 2000);
+                            createBookingApi({ property: property._id })
+                                .then(() => {
+                                    toast.success("Asset reserved successfully! Please complete any required formalities at the University Administration.");
+                                    setPaymentModel(false);
+                                    // Refresh property to update quantity
+                                    getOnePropertyApi(id).then(res => setProperty(res.data.data));
+                                })
+                                .catch(err => {
+                                    toast.error(err.response?.data?.message || "Booking failed.");
+                                });
                         }
                     }}
                 />

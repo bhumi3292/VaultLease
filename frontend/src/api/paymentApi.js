@@ -1,6 +1,6 @@
 // src/api/paymentApi.js
 
-import axios from './axiosInstance';
+import axios from './api';
 
 export const initiateEsewaPaymentApi = async (propertyId, amount, additionalDetails = {}) => {
     try {

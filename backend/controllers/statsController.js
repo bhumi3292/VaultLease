@@ -1,12 +1,12 @@
 const User = require('../models/User');
-const Property = require('../models/Property'); // Assuming Property model exists
+const Space = require('../models/Space'); // Using Space model for Assets
 const Payment = require('../models/payment'); // Assuming Payment model exists
 const AuditLog = require('../models/AuditLog');
 
 exports.getDashboardStats = async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
-        const totalAssets = await Property.countDocuments();
+        const totalAssets = await Space.countDocuments();
         const totalPayments = await Payment.countDocuments();
         // Calculate total revenue from completed payments
         const revenueAgg = await Payment.aggregate([

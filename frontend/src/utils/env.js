@@ -4,9 +4,12 @@ export const VITE_API_BASE_URL = isNode
   ? process.env.VITE_API_BASE_URL || "http://localhost:3001"
   : import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-export const VITE_BACKEND_URL = isNode
-  ? process.env.VITE_BACKEND_URL || "http://localhost:3001"
-  : import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+export const VITE_BACKEND_URL = (() => {
+  const url = isNode
+    ? process.env.VITE_BACKEND_URL || "http://localhost:3001"
+    : import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+  return url.startsWith('http') ? url : `http://${url}`;
+})();
 
 export const VITE_KHALTI_PUBLIC_KEY = isNode
   ? process.env.VITE_KHALTI_PUBLIC_KEY || "test_public_key_617c4c6fe77c441d88451ec1408a0c0e"

@@ -9,6 +9,7 @@ import {
     cancelBookingApi,
     updateBookingStatusApi
 } from '../api/calendarApi';
+import { getMyBookingsApi } from '../api/bookingApi';
 import { Home, Calendar as CalendarIcon, Clock, User, Info, CheckCircle, XCircle, Loader, CircleSlash } from 'lucide-react';
 import { API_URL } from '../api/api';
 
@@ -17,21 +18,19 @@ const BookingDetailsPage = () => {
     const queryClient = useQueryClient();
 
     // Determine which query to run based on user role
-    const { data: bookings, isLoading, isError, error } = useQuery({
+    const { data: bookingsData, isLoading, isError, error } = useQuery({
         queryKey: ['bookings', user?.role], // Query key depends on role
         queryFn: async () => {
             if (!isAuthenticated) return [];
-            if (user.role === 'Tenant') {
-                return await getTenantBookingsApi();
-            } else if (user.role === 'Landlord') {
-                return await getLandlordBookingsApi();
-            }
-            return []; // Should not happen if isAuthenticated and role is checked
+            const res = await getMyBookingsApi(); // Use the unified API
+            return res.data?.data || [];
         },
         enabled: isAuthenticated && !authLoading && !!user?.role, // Only run query when authenticated and role is known
         refetchOnWindowFocus: true,
         staleTime: 5 * 60 * 1000 // 5 minutes
     });
+
+    const bookings = bookingsData || []; // handle potential undefined data
 
     // Mutation for tenant to cancel a booking
     const cancelBookingMutation = useMutation({
@@ -78,6 +77,7 @@ const BookingDetailsPage = () => {
             case 'confirmed': return 'bg-green-100 text-green-800';
             case 'cancelled': return 'bg-red-100 text-red-800';
             case 'rejected': return 'bg-gray-100 text-gray-800';
+            case 'returned': return 'bg-purple-100 text-purple-800';
             default: return 'bg-blue-100 text-blue-800';
         }
     };
@@ -141,7 +141,12 @@ const BookingDetailsPage = () => {
                             </div>
 
                             <div className="space-y-2 text-gray-700 text-base mb-4">
-                                <p className="flex items-center"><CalendarIcon size={18} className="mr-2 text-blue-500" /> Date: <span className="font-medium ml-1">{new Date(booking.date).toLocaleDateString()}</span></p>
+                                <p className="flex items-center"><CalendarIcon size={18} className="mr-2 text-blue-500" /> Collected Date: <span className="font-medium ml-1">{new Date(booking.date).toLocaleDateString()}</span></p>
+
+                                {booking.returnedAt && (
+                                    <p className="flex items-center"><CheckCircle size={18} className="mr-2 text-green-500" /> Returned Date: <span className="font-medium ml-1">{new Date(booking.returnedAt).toLocaleDateString()}</span></p>
+                                )}
+
                                 <p className="flex items-center"><Clock size={18} className="mr-2 text-blue-500" /> Time: <span className="font-medium ml-1">{booking.timeSlot}</span></p>
                                 {isLandlord && (
                                     <p className="flex items-center">
@@ -200,6 +205,17 @@ const BookingDetailsPage = () => {
                                             className="flex-1 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 flex items-center justify-center text-sm font-medium"
                                         >
                                             {updateBookingStatusMutation.isLoading ? <Loader size={16} className="animate-spin mr-1" /> : <CircleSlash size={16} className="mr-1" />} Cancel
+                                        </button>
+                                    )}
+
+                                    {/* Mark as Returned Button */}
+                                    {booking.status?.toLowerCase() === 'confirmed' && (
+                                        <button
+                                            onClick={() => handleStatusChange(booking._id, 'returned')}
+                                            disabled={updateBookingStatusMutation.isLoading}
+                                            className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center text-sm font-medium"
+                                        >
+                                            {updateBookingStatusMutation.isLoading ? <Loader size={16} className="animate-spin mr-1" /> : <CheckCircle size={16} className="mr-1" />} Mark Returned
                                         </button>
                                     )}
                                 </div>

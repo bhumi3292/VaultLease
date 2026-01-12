@@ -3,7 +3,7 @@ import {
     LayoutDashboard, Building, Calendar, Users, CreditCard, MessageSquare,
     Wrench, FileText, Settings, Bell, Search, PlusCircle, Filter,
     MoreVertical, CheckCircle, XCircle, AlertTriangle, ChevronLeft,
-    LogOut, Menu, Trash2, Edit, RefreshCw, Send, Layers
+    LogOut, Menu, Trash2, Edit, RefreshCw, Send, Layers, CalendarCheck
 } from 'lucide-react';
 import { AuthContext } from '../auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,8 @@ import {
     getAllPaymentsApi, updatePaymentStatusApi, getAuditLogsApi,
     getDashboardStatsApi
 } from '../api/adminApi';
+import { getAllBookingsApi, updateBookingStatusApi } from '../api/bookingApi';
+
 import { createOrGetChat, getMyChats } from '../api/chatApi';
 import { createCategoryApi, getCategoriesApi, updateCategoryApi, deleteCategoryApi } from '../api/categoryApi';
 import { logoutUserApi } from '../api/authApi';
@@ -232,7 +234,7 @@ const DashboardView = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-lg font-bold text-gray-800 mb-4">Analytics Overview</h3>
-                    <div className="h-64 w-full">
+                    <div className="h-64 w-full" style={{ minHeight: "250px" }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={data}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -546,6 +548,91 @@ const PaymentsView = () => {
     );
 };
 
+const BookingsView = () => {
+    const [bookings, setBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchBookings = () => {
+        setLoading(true);
+        getAllBookingsApi()
+            .then(res => setBookings(res.data?.data || []))
+            .catch(err => toast.error("Failed to load bookings"))
+            .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        fetchBookings();
+    }, []);
+
+    const handleMarkReturned = async (id) => {
+        if (window.confirm("Confirm return of this asset? This will increase available quantity.")) {
+            try {
+                await updateBookingStatusApi(id, 'returned');
+                toast.success("Asset marked as returned");
+                fetchBookings();
+            } catch (error) {
+                toast.error("Failed to update status");
+            }
+        }
+    };
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-800">Lease/Booking Requests</h3>
+                <button onClick={fetchBookings} className="text-[#008080] hover:bg-gray-50 p-2 rounded"><RefreshCw size={18} /></button>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-gray-600">
+                    <thead className="bg-gray-50 uppercase text-xs">
+                        <tr>
+                            <th className="px-6 py-4">Asset</th>
+                            <th className="px-6 py-4">Tenant/Student</th>
+                            <th className="px-6 py-4">Collected Date</th>
+                            <th className="px-6 py-4">Returned Date</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {loading ? <tr><td colSpan="6" className="p-4 text-center">Loading...</td></tr> : bookings.length === 0 ? <tr><td colSpan="6" className="p-4 text-center">No bookings found</td></tr> : bookings.map(b => (
+                            <tr key={b._id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 font-medium text-gray-900">{b.property?.title || b.property?.roomName || 'Unknown Asset'}</td>
+                                <td className="px-6 py-4">
+                                    <div className="font-medium">{b.tenant?.fullName || 'Unknown'}</div>
+                                    <div className="text-xs text-gray-400">{b.tenant?.email}</div>
+                                </td>
+                                <td className="px-6 py-4">{new Date(b.date).toLocaleDateString()}</td>
+                                <td className="px-6 py-4">
+                                    {b.returnedAt ? (
+                                        <div className="text-green-600 font-medium text-xs">
+                                            {new Date(b.returnedAt).toLocaleDateString()}
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-400 text-xs">Pending Return</span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'returned' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                        {b.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    {b.status === 'confirmed' && (
+                                        <button onClick={() => handleMarkReturned(b._id)} className="bg-[#008080] text-white px-3 py-1 rounded text-xs hover:bg-[#006666]">
+                                            Mark Returned
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
 const AuditLogsView = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -658,7 +745,7 @@ export default function Management() {
     useEffect(() => {
         if (!isAuthenticated) return;
         const role = user?.role?.toUpperCase();
-        if (role !== 'ADMIN' && role !== 'ADMINISTRATOR') {
+        if (!role || (!role.includes('ADMIN'))) {
             toast.error("Access Restricted: Administrators Only");
             navigate('/');
         }
@@ -693,6 +780,7 @@ export default function Management() {
         { id: 'assets', label: 'Asset Management', icon: Building },
         { id: 'categories', label: 'Category Management', icon: Layers },
         { id: 'users', label: 'User Management', icon: Users },
+        { id: 'bookings', label: 'Booking Management', icon: CalendarCheck },
         { id: 'payments', label: 'Payments & Refunds', icon: CreditCard },
         { id: 'messages', label: 'Messages', icon: MessageSquare },
         { id: 'logs', label: 'Audit Logs', icon: FileText },
@@ -735,7 +823,9 @@ export default function Management() {
                     {activeTab === 'assets' && <AssetsView />}
                     {activeTab === 'categories' && <CategoriesView />}
                     {activeTab === 'users' && <UsersView onStartChat={handleStartChat} />}
+                    {activeTab === 'bookings' && <BookingsView />}
                     {activeTab === 'payments' && <PaymentsView />}
+
                     {activeTab === 'logs' && <AuditLogsView />}
                     {activeTab === 'messages' && (
                         <MessagesView

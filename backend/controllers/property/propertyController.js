@@ -153,7 +153,7 @@ exports.updateProperty = async (req, res) => {
 
         const {
             title, description, location, bedrooms, categoryId,
-            existingImages,
+            existingImages, price, bathrooms
         } = req.body;
 
         // Add newly uploaded files to cleanup array if an error occurs later
