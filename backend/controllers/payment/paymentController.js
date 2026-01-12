@@ -130,7 +130,16 @@ const verifyEsewaPayment = async (req, res) => {
             return res.status(400).json({ message: 'Amount mismatch during eSewa verification', payment });
         }
 
+        if (typeof oid !== 'string' || typeof amt !== 'string' || typeof refId !== 'string') {
+            return res.status(400).json({ message: 'Invalid data format for verification' });
+        }
+
         // eSewa server-to-server verification (using the status check API)
+        // Security requirement: Ensure verify URL is HTTPS
+        if (!process.env.ESEWA_VERIFY_URL || !process.env.ESEWA_VERIFY_URL.startsWith('https')) {
+            console.warn("Security Warning: eSewa verification URL is not HTTPS or missing.");
+        }
+
         const esewaResponse = await axios.post(
             ESEWA_VERIFY_URL,
             {

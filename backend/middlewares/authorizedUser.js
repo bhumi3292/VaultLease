@@ -5,13 +5,19 @@ const User = require("../models/User");
 
 // Define authenticateUser function
 const authenticateUser = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
+    let token;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
+    } else if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+        token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
         return res.status(401).json({ success: false, message: "Access token missing or invalid" });
     }
 
-    const token = authHeader.split(" ")[1];
+    // const token = authHeader.split(" ")[1]; // Removed old extraction
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);

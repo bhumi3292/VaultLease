@@ -128,7 +128,18 @@ exports.loginUser = async (req, res) => {
         user.lockUntil = undefined;
         await user.save();
 
-        // 4. Generate OTP
+        // 4. Password Expiration Check (90 days)
+        const passwordAge = user.passwordChangedAt ? (Date.now() - new Date(user.passwordChangedAt).getTime()) : 0;
+        const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+
+        if (passwordAge > ninetyDays) {
+            return res.status(403).json({
+                success: false,
+                message: "Your password has expired (older than 90 days). Please reset it via 'Forgot Password' to proceed."
+            });
+        }
+
+        // 5. Generate OTP
         // Generate 6-digit OTP
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         // Hash OTP before saving (optional but good practice, here we save plain for simplicity or hash it)
@@ -206,10 +217,18 @@ exports.verifyOtp = async (req, res) => {
         // Log Successful Login
         await createAuditLog(user._id, 'LOGIN', req, 'User logged in via OTP');
 
-        return res.status(200).json({
+        // Set secure cookie
+        const options = {
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+            httpOnly: true, // Prevent client-side JS access
+            secure: process.env.NODE_ENV === 'production', // Only secure in prod
+            sameSite: 'lax' // CSRF protection
+        };
+
+        return res.status(200).cookie('token', token, options).json({
             success: true,
             message: "Login successful",
-            token,
+            // token, // Removed from body for security
             user: userWithoutPassword
         });
 
@@ -241,6 +260,12 @@ exports.resendOtp = async (req, res) => {
 
 // Logout User
 exports.logoutUser = async (req, res) => {
+    // Clear cookie
+    res.cookie('token', 'none', {
+        expires: new Date(Date.now() + 10 * 1000),
+        httpOnly: true
+    });
+
     // Since JWT is stateless, we primarily log the action. 
     // The frontend handles token removal.
     // user property should be available if authenticated middleware is used
@@ -359,7 +384,28 @@ exports.resetPassword = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found or token is invalid.' });
         }
 
-        user.password = newPassword; // Mongoose pre-save hook should hash this
+        // Check Password History
+        if (user.passwordHistory && user.passwordHistory.length > 0) {
+            const bcrypt = require('bcryptjs');
+            for (let oldPassHash of user.passwordHistory) {
+                const isUsedBefore = await bcrypt.compare(newPassword, oldPassHash);
+                if (isUsedBefore) {
+                    return res.status(400).json({ success: false, message: "New password cannot be the same as your recent passwords." });
+                }
+            }
+        }
+
+        // Add current password to history
+        if (!user.passwordHistory) user.passwordHistory = [];
+        user.passwordHistory.push(user.password);
+
+        // Keep only last 5 passwords
+        if (user.passwordHistory.length > 5) {
+            user.passwordHistory.shift();
+        }
+
+        user.password = newPassword;
+        user.passwordChangedAt = Date.now();
         await user.save();
 
         await createAuditLog(user._id, 'CHANGE_PASSWORD', req, 'Password reset via email link');
@@ -400,18 +446,38 @@ exports.changePassword = async (req, res) => {
     try {
         const user = await User.findById(userId);
         if (!user) {
-            // This case should ideally not happen if authenticateUser works correctly
             return res.status(404).json({ success: false, message: "User not found." });
         }
 
         // Verify current password against the hashed password in DB
-        const isMatch = await user.comparePassword(currentPassword); // Assuming comparePassword method
+        const isMatch = await user.comparePassword(currentPassword);
         if (!isMatch) {
             return res.status(401).json({ success: false, message: "Incorrect current password." });
         }
 
+        // Check Password History
+        if (user.passwordHistory && user.passwordHistory.length > 0) {
+            const bcrypt = require('bcryptjs'); // Ensure bcrypt is available
+            for (let oldPassHash of user.passwordHistory) {
+                const isUsedBefore = await bcrypt.compare(newPassword, oldPassHash);
+                if (isUsedBefore) {
+                    return res.status(400).json({ success: false, message: "New password cannot be the same as your recent passwords." });
+                }
+            }
+        }
+
+        // Add current password to history before changing
+        if (!user.passwordHistory) user.passwordHistory = [];
+        user.passwordHistory.push(user.password);
+
+        // Keep only last 5 passwords
+        if (user.passwordHistory.length > 5) {
+            user.passwordHistory.shift(); // Remove oldest
+        }
+
         // Update password (Mongoose pre-save hook should handle hashing the new password)
         user.password = newPassword;
+        user.passwordChangedAt = Date.now();
         await user.save();
 
         await createAuditLog(user._id, 'CHANGE_PASSWORD', req, 'Password changed from profile');
@@ -420,7 +486,6 @@ exports.changePassword = async (req, res) => {
 
     } catch (error) {
         console.error("Error in changePassword:", error);
-        // Specific error handling for database issues, validation, etc.
         return res.status(500).json({ success: false, message: "Server error during password change." });
     }
 };

@@ -15,10 +15,13 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 // const xss = require('xss-clean'); // REMOVED
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const app = express(); // Initialize Express app
 
 // ========== Security Middleware ==========
+
+app.use(cookieParser()); // Parse cookies
 
 // CORS must be first for browser to see access control headers
 app.use(cors({
