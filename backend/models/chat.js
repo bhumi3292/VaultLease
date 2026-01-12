@@ -1,4 +1,4 @@
-// backend/models/chat.js
+// vaultlease_backend/models/chat.js
 const mongoose = require('mongoose');
 
 // Define the schema for individual messages within a chat
@@ -32,10 +32,10 @@ const chatSchema = new mongoose.Schema(
                 required: true
             }
         ],
-        asset: {
+        property: {
             type: mongoose.Schema.ObjectId,
-            ref: 'Asset', // Renamed from Property
-            required: false // Not all chats will be tied to an asset
+            ref: 'Property',
+            required: false // Not all chats will be tied to a property
         },
         lastMessage: { // This field can store the text of the last message for quick display
             type: String,
@@ -45,7 +45,7 @@ const chatSchema = new mongoose.Schema(
             type: Date,
             default: Date.now
         },
-        messages: [messageSubSchema]
+        messages: [messageSubSchema] 
     },
     {
         timestamps: true // This provides `createdAt` and `updatedAt` for the chat document itself

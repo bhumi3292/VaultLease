@@ -10,7 +10,7 @@ const cartSchema = new mongoose.Schema({
         {
             property: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Property',
+                ref: 'Space',
                 required: true
             },
         }

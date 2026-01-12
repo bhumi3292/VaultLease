@@ -3,37 +3,27 @@ require('dotenv').config();
 
 const isTest = process.env.NODE_ENV === 'test';
 
-// Check if credentials are set
-const hasCredentials = process.env.EMAIL_USER && process.env.EMAIL_PASS;
-
-const transporter = hasCredentials ? nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS || process.env.Email_APIKEY || process.env.Email_APIKEy // Support user's custom var
+        pass: process.env.EMAIL_PASS
     },
     tls: {
         rejectUnauthorized: false // Allow self-signed certs in dev/test
     }
-}) : null;
+});
 
 // Function to send email
 const sendEmail = async (to, subject, text, html) => {
-    if (isTest || !hasCredentials) {
-        if (!hasCredentials) {
-            console.warn('WARNING: EMAIL_USER or EMAIL_PASS missing. Email sending skipped. Check server logs for OTP/content.');
-            console.log(`[MOCK EMAIL] To: ${to} | Subject: ${subject} | Content: ${text || 'HTML Content'}`);
-        } else {
-            console.log(`Mock email sent to ${to} with subject "${subject}"`);
-        }
-        return { messageId: 'mock-id-no-creds' }; // Fake result to allow flow to continue
+    if (isTest) {
+        console.log(`Mock email sent to ${to} with subject "${subject}"`);
+        return { messageId: 'mock-id' }; // Fake result for test
     }
 
     try {
-        // Use EMAIL_FROM if provided (e.g., for API keys where user isn't an email), otherwise fallback to EMAIL_USER
-        const sender = process.env.EMAIL_FROM || process.env.EMAIL_USER;
         const mailOptions = {
-            from: `"VaultLease Support" <${sender}>`,
+            from: `"VaultLease Support" <${process.env.EMAIL_USER}>`,
             to,
             subject,
             text,

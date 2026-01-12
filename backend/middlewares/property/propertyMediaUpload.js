@@ -13,18 +13,7 @@ const storage = multer.diskStorage({
     },
 });
 
-const allowedMimeTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/heic",
-    "video/mp4",
-    "video/quicktime",
-    "video/webm",
-    "video/x-matroska",
-    "video/avi"
-];
+const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "video/mp4", "video/quicktime", "video/webm"];
 
 const upload = multer({
     storage,
@@ -42,7 +31,6 @@ const upload = multer({
 
 const uploadPropertyMedia = upload.fields([
     { name: "images", maxCount: 10 },
-    { name: "videos", maxCount: 3 },
 ]);
 
 module.exports = uploadPropertyMedia;

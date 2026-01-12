@@ -1,4 +1,4 @@
-// dreamdwell_backend/models/calendar.js
+// vaultlease_backend/models/calendar.js
 const mongoose = require('mongoose');
 
 const AvailabilitySchema = new mongoose.Schema({ // <-- First argument: Schema fields

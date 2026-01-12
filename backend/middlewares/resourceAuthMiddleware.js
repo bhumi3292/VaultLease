@@ -1,4 +1,4 @@
-// dreamdwell_backend/middlewares/resourceAuthMiddleware.js
+// vaultlease_backend/middlewares/resourceAuthMiddleware.js
 
 // --- CORRECTED IMPORT PATH FOR AVAILABILITY ---
 const Availability = require('../models/calendar'); // Corrected from '../models/calendar'

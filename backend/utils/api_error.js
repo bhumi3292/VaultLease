@@ -1,4 +1,4 @@
-// backend/utils/api_error.js
+// vaultlease_backend/utils/api_error.js
 
 class ApiError extends Error {
     constructor(

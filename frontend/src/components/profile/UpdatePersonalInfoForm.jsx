@@ -1,4 +1,3 @@
-// src/components/profile/UpdatePersonalInfoForm.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { toast } from "react-toastify";
 import { Edit } from "lucide-react";
@@ -73,74 +72,64 @@ export default function UpdatePersonalInfoForm() {
         });
     };
 
+    const InputField = ({ label, id, name, type = "text", placeholder, error }) => (
+        <div>
+            <label htmlFor={id} className="block text-sm font-semibold text-gray-700 mb-2">{label}</label>
+            <input
+                type={type}
+                id={id}
+                name={name}
+                value={personalInfoForm[name]}
+                onChange={handlePersonalInfoChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#008080]/50 transition-all ${error ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-[#008080]'
+                    } bg-gray-50 focus:bg-white`}
+                placeholder={placeholder}
+                aria-invalid={error ? "true" : "false"}
+            />
+            {error && <p className="mt-1 text-sm text-red-600 font-medium">{error}</p>}
+        </div>
+    );
+
     return (
-        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
-            <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-                <Edit className="h-7 w-7 text-[#003366]" /> Update Personal Information
+        <div className="bg-white p-8 rounded-2xl shadow-md border border-gray-100">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3 pb-4 border-b border-gray-100">
+                <div className="p-2 bg-[#008080]/10 rounded-lg">
+                    <Edit className="h-6 w-6 text-[#008080]" />
+                </div>
+                Update Personal Information
             </h2>
-            <form onSubmit={handlePersonalInfoSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input
-                        type="text"
+            <form onSubmit={handlePersonalInfoSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputField
+                        label="Full Name"
                         id="fullName"
                         name="fullName"
-                        value={personalInfoForm.fullName}
-                        onChange={handlePersonalInfoChange}
-                        className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003366] ${
-                            errors.fullName ? 'border-red-500' : 'border-gray-300'
-                        } transition duration-200 ease-in-out`}
-                        placeholder="Your full name"
-                        aria-invalid={errors.fullName ? "true" : "false"}
-                        aria-describedby={errors.fullName ? "fullName-error" : undefined}
+                        placeholder="John Doe"
+                        error={errors.fullName}
                     />
-                    {errors.fullName && (
-                        <p id="fullName-error" className="mt-1 text-sm text-red-600">{errors.fullName}</p>
-                    )}
-                </div>
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <input
-                        type="email"
+                    <InputField
+                        label="Email Address"
                         id="email"
                         name="email"
-                        value={personalInfoForm.email}
-                        onChange={handlePersonalInfoChange}
-                        className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003366] ${
-                            errors.email ? 'border-red-500' : 'border-gray-300'
-                        } transition duration-200 ease-in-out`}
-                        placeholder="your@email.com"
-                        aria-invalid={errors.email ? "true" : "false"}
-                        aria-describedby={errors.email ? "email-error" : undefined}
+                        type="email"
+                        placeholder="john@university.edu"
+                        error={errors.email}
                     />
-                    {errors.email && (
-                        <p id="email-error" className="mt-1 text-sm text-red-600">{errors.email}</p>
-                    )}
                 </div>
-                <div className="md:col-span-2">
-                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
-                    <input
-                        type="tel"
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        value={personalInfoForm.phoneNumber}
-                        onChange={handlePersonalInfoChange}
-                        className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003366] ${
-                            errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
-                        } transition duration-200 ease-in-out`}
-                        placeholder="e.g., 98XXXXXXXX"
-                        aria-invalid={errors.phoneNumber ? "true" : "false"}
-                        aria-describedby={errors.phoneNumber ? "phoneNumber-error" : undefined}
-                    />
-                    {errors.phoneNumber && (
-                        <p id="phoneNumber-error" className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
-                    )}
-                </div>
-                <div className="md:col-span-2 flex justify-end mt-4">
+                <InputField
+                    label="Phone Number (Optional)"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    placeholder="+977 98XXXXXXXX"
+                    error={errors.phoneNumber}
+                />
+
+                <div className="pt-4 flex justify-end">
                     <button
                         type="submit"
-                        className="bg-[#003366] text-white px-8 py-3 rounded-lg shadow-lg hover:bg-[#002244] transition-all duration-300 ease-in-out font-semibold text-lg
-                                   disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="bg-[#008080] text-white px-8 py-3 rounded-lg shadow-lg shadow-[#008080]/20 hover:bg-[#006666] transition-all duration-300 font-bold
+                                   disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2 transform hover:-translate-y-0.5"
                         disabled={isUpdatingProfile}
                     >
                         {isUpdatingProfile ? (

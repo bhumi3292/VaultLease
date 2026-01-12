@@ -2,23 +2,127 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-    scroll-behavior: smooth;
+:root {
+  --color-primary: #008080;
+  /* University Teal */
+  --color-primary-dark: #005F5F;
+  /* Dark Teal / Hover */
+  --color-accent: #C9A227;
+  /* Academic Gold */
+  --color-background: #F4F8F8;
+  /* Light background */
+  --color-card: #FFFFFF;
+  --color-text-primary: #1F2933;
+  --color-text-secondary: #6B7280;
+  --color-error: #B91C1C;
+  --color-success: #047857;
 }
 
 body {
-    background-color: #F7F9FC;
-    color: #2D2D2D;
-    @apply antialiased;
+  font-family: 'Inter', 'Poppins', 'Roboto', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
 }
 
-@layer base {
+.auth-card {
+  max-width: 420px;
+  width: 100%;
+  padding: 32px;
+  background-color: var(--color-card);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
-    button,
-    a,
-    input,
-    select,
-    textarea {
-        @apply transition-all duration-300 ease-in-out;
-    }
+.auth-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  /* Light gray */
+  background-color: white;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.auth-input:focus {
+  border-color: var(--color-primary);
+  ring: 2px solid var(--color-primary);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: 8px;
+  width: 100%;
+  transition: background-color 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.link-primary {
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link-primary:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Navbar Animations Support */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-duration: 0.2s;
+  animation-fill-mode: forwards;
+}
+
+.slide-in-from-top-2 {
+  animation-name: slideDown;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+  /* Use existing keyframe or define new one if specific logic needed */
 }

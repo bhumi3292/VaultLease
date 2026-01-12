@@ -21,7 +21,7 @@ let testCategoryIdForCart;
 let landlordTokenForCartTests;
 
 
-// --- Auth, Category, Property Basic Tests (using vaultlease_test_auth) ---
+// --- Auth, Category, Property Basic Tests (using dreamdwell_test_auth) ---
 describe("Auth, Category, and Basic Property API Tests", () => {
     // beforeAll for this specific test suite (Auth, Category, Property Basic)
     beforeAll(async () => {
@@ -342,7 +342,7 @@ describe("Auth, Category, and Basic Property API Tests", () => {
     });
 });
 
-// --- Cart API Tests (using fortirent_test_cart) ---
+// --- Cart API Tests (using dreamdwell_test_cart) ---
 describe("Cart API Tests", () => {
     // beforeAll for Cart API tests
     beforeAll(async () => {

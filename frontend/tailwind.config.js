@@ -7,59 +7,28 @@ export default {
     ],
     theme: {
         extend: {
-            colors: {
-                primary: {
-                    DEFAULT: '#1F4E79', // VaultLease Navy
-                    hover: '#163a5c',
-                    light: '#F0F4F8',
-                },
-                secondary: {
-                    DEFAULT: '#F0F4F8', // VaultLease Secondary (Light)
-                    hover: '#dbeafe', // Slightly darker for hover if used as btn (though implies light text)
-                    brand: '#06B6D4', // Keeping Cyan as an 'accent' or 'brand' color if 'secondary' was critical for buttons
-                },
-                navy: {
-                    900: '#1F4E79'
-                },
-                background: {
-                    DEFAULT: '#F0F4F8', // VaultLease Secondary used as background
-                    paper: '#FFFFFF',
-                    dark: '#1e293b',
-                },
-                text: {
-                    main: '#1F4E79', // Using primary for main text
-                    muted: '#64748b',
-                    inverted: '#FFFFFF',
-                },
-                state: {
-                    error: '#ef4444',
-                    success: '#10b981',
-                    warning: '#f59e0b',
-                    info: '#3b82f6',
-                },
-            },
-            fontFamily: {
-                heading: ['Poppins', 'Montserrat', 'sans-serif'],
-                body: ['Roboto', 'Open Sans', 'sans-serif'],
-            },
-            boxShadow: {
-                'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-                'soft-xl': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
-                'card': '0 2px 12px rgba(0,0,0,0.08)',
-            },
-            borderRadius: {
-                'xl': '1rem',
-                '2xl': '1.5rem',
-                '3xl': '2rem',
-            },
-            animation: {
-                'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
-            },
             keyframes: {
                 fadeInUp: {
                     '0%': { opacity: '0', transform: 'translateY(20px)' },
                     '100%': { opacity: '1', transform: 'translateY(0)' },
-                }
+                },
+                bounceSlow: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(10px)' },
+                },
+                textGlow: {
+                    '0%, 100%': { 'text-shadow': '0 0 5px rgba(255,255,255,0.5), 0 0 10px rgba(0,43,91,0.3)' }, /* Subtle initial white glow, and blue glow */
+                    '50%': { 'text-shadow': '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(0,43,91,0.6)' }, /* Brighter white glow, and more prominent blue glow */
+                },
+            },
+            animation: {
+                'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                // Make sure these delay animations are defined correctly for staggering
+                'fade-in-up-delay-200': 'fadeInUp 0.8s ease-out 0.2s forwards',
+                'fade-in-up-delay-400': 'fadeInUp 0.8s ease-out 0.4s forwards',
+                'fade-in-up-delay-600': 'fadeInUp 0.8s ease-out 0.6s forwards',
+                'bounce-slow': 'bounceSlow 2s infinite',
+                'text-glow-subtle': 'textGlow 2s infinite ease-in-out',
             }
         },
     },

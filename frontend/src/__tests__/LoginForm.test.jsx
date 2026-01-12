@@ -17,7 +17,7 @@ describe('LoginForm', () => {
         </MemoryRouter>
       </AuthContext.Provider>
     );
-    expect(screen.getByText(/Login to DreamDwell/i)).toBeInTheDocument();
+    expect(screen.getByText(/Login to VaultLease/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Stakeholder/i)).toBeInTheDocument();

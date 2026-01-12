@@ -1,10 +1,10 @@
-// backend/controllers/ChatbotController.js
+// vaultlease_backend/controllers/ChatbotController.js
 
 const ApiError = require("../utils/api_error");
 const ApiResponse = require("../utils/api_response");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const Asset = require("../models/Asset");
+const Property = require("../models/Property");
 const User = require("../models/User");
 const Category = require("../models/Category");
 
@@ -15,86 +15,113 @@ const generateKnowledgeBase = async () => {
     let context = "";
 
     try {
-        const recentAssets = await Asset.find({}).sort({ createdAt: -1 }).limit(5).populate('category', 'category_name');
+        // Live spaces (recently added rooms)
+        const recentProperties = await Property.find({}).sort({ createdAt: -1 }).limit(5).populate('categoryId', 'category_name');
 
-        context += "LIVE ASSET INFORMATION (recent):\n";
-        if (recentAssets.length > 0) {
-            recentAssets.forEach(asset => {
-                context += `- Name: ${asset.name}, Type: ${asset.category ? asset.category.category_name : 'N/A'}, Location: ${asset.location}, Fee: $${asset.accessFee}, SN: ${asset.serialNumber}.\n`;
+        context += "LIVE SPACE INFORMATION (recent rooms):\n";
+        if (recentProperties.length > 0) {
+            recentProperties.forEach(prop => {
+                context += `- Room: ${prop.title}, Department: ${prop.categoryId ? prop.categoryId.category_name : 'N/A'}, Location: ${prop.location || 'N/A'}, Capacity: ${prop.capacity || 'N/A'}.\n`;
             });
         } else {
-            context += "No recent assets available.\n";
+            context += "No recent rooms available in the system.\n";
         }
 
-        // Fetch some administrators
-        const admins = await User.find({ role: "ADMINISTRATOR" }).limit(3);
+        // Fetch some landlords (optional, but good for context if chatbot is asked about them)
+        const landlords = await User.find({ role: "Landlord" }).limit(3); // Assuming 'role' field in User model
 
-        context += "\nOUR ADMINISTRATORS (contacts):\n";
-        if (admins.length > 0) {
-            admins.forEach(admin => {
-                context += `- Name: ${admin.fullName}, Dept: ${admin.department || 'N/A'}, Email: ${admin.email}.\n`;
+        context += "\nOUR DEPARTMENT ADMINS (examples):\n";
+        if (landlords.length > 0) {
+            landlords.forEach(landlord => {
+                context += `- Name: ${landlord.fullName || 'N/A'}, Email: ${landlord.email || 'N/A'}.\n`;
             });
         } else {
-            context += "No administrator info available.\n";
+            context += "No department admin information available.\n";
         }
 
-        // Fetch categories
+        // Fetch property categories
         const categories = await Category.find({});
-        context += "\nASSET CATEGORIES:\n";
+        context += "\nDEPARTMENTS:\n";
         if (categories.length > 0) {
             context += categories.map(cat => `- ${cat.category_name}`).join('\n') + '.\n';
         } else {
-            context += "No asset categories defined.\n";
+            context += "No departments defined.\n";
         }
 
     } catch (dbError) {
         console.error("Error fetching data for knowledge base:", dbError);
-        context += "\nNote: Data retrieval failed.\n";
+        context += "\nNote: Data retrieval failed, I might have limited real-time information.\n";
     }
 
     return context;
 };
 
 // This is the static personality and FAQ for your bot.
-const systemPrompt = `You are VaultBot, the AI assistant for "VaultLese", an institutional asset access system.
+const systemPrompt = `You are VaultBot, the friendly and helpful chatbot assistant for "VaultLease", a university department room reservation system.
 
-Your mission is to guide students and faculty through:
-- Finding and requesting equipment or rooms
-- Understanding access policies
-- Contacting administrators
+Your mission is to guide users through:
+- Finding available department rooms and labs
+- Making reservations for campus spaces
+- Answering site-related or department-related questions
+- Providing concise scheduling and reservation guidance
 
 Tone:
-- Professional, academic, and helpful.
-- Concise and precise.
+- Be welcoming, professional, and use phrases related to campus spaces and bookings (e.g., "Let's find a suitable room for your class!", "Reservation confirmed!").
+- Keep replies concise, clear, and helpful.
 
 Capabilities:
-1. **Asset Recommendations:**
-    - Use LIVE ASSET INFORMATION.
-    - Ask: "What equipment do you need?" or "Which department?"
+1. **Space Recommendations:**
+    - If the user asks about rooms, use the LIVE SPACE INFORMATION to recommend suitable options.
+    - Ask follow-up questions like:
+        - "Which department or lab do you need?"
+        - "What date and time are you looking for?"
+        - "What is the expected capacity or equipment needed?"
+    - Then suggest a few rooms based on that info.
 
-2. **Requesting Access:**
-    - Guide to "Assets" page -> "Request Access" button.
-    - Requirements: University ID, Department approval.
+2. **Making Reservations:**
+    - If the user wants to reserve a room, guide them to the "Add Reservation" page or explain the reservation steps.
+    - Explain the process: "If you're an admin or student, you can reserve a department room on VaultLease. Select the department, choose an available slot, and confirm the reservation."
 
-3. **Policies:**
-    - "Return assets on time to avoid late fees."
-    - "All requests require valid University credentials."
+3. **Booking Process/Advice:**
+    - If they ask about booking rules, offer general campus-relevant tips:
+        - "Confirm department approval if required."
+        - "Check equipment availability ahead of time."
+        - "Note any cleanup or usage policies specific to the space."
+
+4. **Other Questions:**
+    - If you're unsure or the question is outside your scope, reply:
+        - "I'm not sure about that, but you can browse available department rooms or check with your department admin for specifics."
 
 👋 First Message:
-"Hello! I'm VaultBot. How can I assist you with accessing university resources today?"
+Always start your very first response with:
+"Hello! I'm VaultBot, your friendly VaultLease assistant. How can I help you find or reserve a department room today?"
 
 🏡 LIVE DATA:
-[Insert LIVE ASSET INFORMATION and OUR ADMINISTRATORS here]
-[Insert ASSET CATEGORIES here]
+The latest data from our system will appear below. Use it when available to generate your responses.
 
-📚 FAQs:
+---
+[Insert LIVE SPACE INFORMATION and OUR DEPARTMENT ADMINS here]
+[Insert DEPARTMENTS here]
 
-🏠 What is VaultLese?
-"VaultLese is the university's centralized system for managing and leasing academic assets like lab equipment, rooms, and books."
+📚 FAQs for VaultLease:
 
-🔑 How do I request an item?
-"Log in with your university account, browse the 'Assets' catalog, and click 'Request Access' on the item you need."
+🏠 What is VaultLease and how does it work?
+"VaultLease is a campus-focused platform for reserving university department rooms and labs. Browse available spaces, check schedules, and make reservations for classes, events, or research."
 
+🛠️ Who manages VaultLease?
+"VaultLease is maintained by the campus IT and facilities teams in collaboration with department administrators to simplify space management across campus."
+
+👤 How do I update my profile?
+"To update your profile, log in to your VaultLease account, go to your Profile, and select 'Edit Profile' to update your contact information and preferences."
+
+🔍 How can I find rooms on VaultLease?
+"Use the search filters to find rooms by department, capacity, equipment, or available time slots. Tell me what you need and I'll suggest options."
+
+🔑 How do I reserve a room?
+"Select the department and room, choose an available time slot, and confirm the reservation. Some rooms may require department approval."
+
+🔐 I forgot my password. What do I do?
+"Click the 'Forgot Password' link on the login page; we'll email instructions to reset your password."
 `;
 
 
@@ -120,7 +147,7 @@ const handleChatQuery = async (req, res) => {
         const chat = model.startChat({
             history: [
                 { role: "user", parts: [{ text: fullSystemPrompt }] },
-                { role: "model", parts: [{ text: "Understood! I'm VaultBot, your assistant for VaultLease, ready to help users find assets or manage their listings. Let's start!" }] },
+                { role: "model", parts: [{ text: "Understood! I'm VaultBot, your assistant for VaultLease, ready to help users find rooms or manage department listings. Let's start!" }] },
                 ...formattedHistory,
             ],
             generationConfig: {

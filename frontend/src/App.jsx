@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import AppRoutes from "./routers/AppRouter.jsx";
-import Navbar from "./layouts/Navbar.jsx";
-import Footer from "./layouts/Footer.jsx";
+import Navbar from "./layouts/navbar.jsx";
+import Footer from "./layouts/footer.jsx";
 import AuthContextProvider from "./auth/AuthProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
@@ -25,7 +25,7 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <AuthContextProvider>
-                <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <Router>
                     <Navbar />
                     {/* Main content area, pushed down by fixed Navbar */}
                     <div className="pt-[70px] min-h-screen flex flex-col">
@@ -38,7 +38,7 @@ function App() {
                     {/* Floating Action Button (FAB) for Chatbot */}
                     <button
                         onClick={toggleChatbot}
-                        className="fixed bottom-4 right-4 z-[1001] bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary-hover transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        className="fixed bottom-4 right-4 z-[1001] bg-[#008080] text-white p-4 rounded-full shadow-lg hover:bg-[#005F5F] transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#008080] focus:ring-offset-2"
                         aria-label={showChatbot ? "Close chatbot" : "Open chatbot"}
                     >
                         <MessageSquare size={28} />

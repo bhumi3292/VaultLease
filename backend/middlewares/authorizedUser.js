@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const Asset = require("../models/Asset");
+const Property = require("../models/Property");
 
 // Define authenticateUser function
 const authenticateUser = (req, res, next) => {
@@ -28,37 +28,35 @@ const authenticateUser = (req, res, next) => {
 
 // Define isAdministrator function
 const isAdministrator = (req, res, next) => {
-    if (req.user && (req.user.role === "ADMINISTRATOR" || req.user.role === "ADMIN")) {
-        next();
-    } else {
-        return res.status(403).json({ success: false, message: "Access denied: Administrator only" });
+    // console.log("Checking Admin Role:", req.user); // Debug log
+    if (req.user && (req.user.role === "Administrator" || req.user.role === "ADMINISTRATOR" || req.user.role === "Admin" || req.user.role === "ADMIN")) {
+        return next();
     }
+    return res.status(403).json({ success: false, message: "Access denied: Administrators only" });
 };
 
-// Define isAssetAdministrator function
-const isAssetAdministrator = async (req, res, next) => {
+// Define isPropertyOwner function
+const isPropertyOwner = async (req, res, next) => {
     try {
-        const asset = await Asset.findById(req.params.id);
-        if (!asset) {
-            return res.status(404).json({ success: false, message: "Asset not found" });
+        const property = await Property.findById(req.params.id);
+        if (!property) {
+            return res.status(404).json({ success: false, message: "Property not found" });
         }
 
-        // Check if the user is the administrator of the asset OR is an Admin
-        if (asset.administrator.toString() !== req.user._id && req.user.role !== "ADMIN") {
-            return res.status(403).json({ success: false, message: "Access denied: You do not manage this asset" });
+        if (property.landlord.toString() !== req.user._id) {
+            return res.status(403).json({ success: false, message: "Access denied: You do not own this property" });
         }
 
         next();
     } catch (error) {
-        console.error("Error in isAssetAdministrator:", error);
+        console.error("Error in isPropertyOwner:", error);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
 // Export the functions AFTER they have been defined
-// Export the functions AFTER they have been defined
 module.exports = {
     authenticateUser,
     isAdministrator,
-    isAssetAdministrator,
+    isPropertyOwner,
 };

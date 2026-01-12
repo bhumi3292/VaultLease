@@ -8,7 +8,7 @@ export const useRegisterUserTan = () => {
             mutationFn: registerUserService, // which function to run
             mutationKey: ['register'], // key for this hook
             onSuccess: (data) => {
-                toast.success(data.message || "Registration Successful")
+                toast.success(data.message || "Registratoin Successfull")
             },
             onError: (err) => {
                 toast.error(err.message || "Registration Failed")

@@ -78,14 +78,15 @@ function ChatView({ selectedChatId, currentUserId }) {
     const otherParticipant = chatData?.participants?.find(p => p._id !== senderIdForMessages);
 
     return (
-        <div className="flex flex-col h-full">
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Chat header with landlord/avatar info */}
             <div className="flex items-center mb-3 border-b pb-2">
                 {otherParticipant?.profilePicture ? (
                     <img
                         src={getFullMediaUrl(otherParticipant.profilePicture)}
                         alt={otherParticipant.fullName}
-                        className="w-10 h-10 rounded-full mr-3 border object-cover"
+                        className="w-10 h-10 rounded-full mr-3 border"
+                        style={{ objectFit: 'cover' }}
                     />
                 ) : (
                     <div className="w-10 h-10 rounded-full bg-gray-300 mr-3 flex items-center justify-center text-lg text-gray-600">
@@ -104,33 +105,41 @@ function ChatView({ selectedChatId, currentUserId }) {
                     )}
                 </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-2 bg-gray-50 rounded-lg mb-3 border border-gray-200">
+            <div className="flex-1 overflow-y-auto p-2 bg-gray-50 rounded-md mb-3" style={{ border: '1px solid #e0e0e0' }}>
                 {messages.length === 0 ? (
                     <p className="text-gray-600 text-center py-4">No messages yet. Start the conversation!</p>
                 ) : (
                     messages.map((message) => (
                         <div
                             key={message._id || message.isOptimistic ? message._id : `temp-${Math.random()}`}
-                            className={`flex items-end my-2 ${message.sender._id === senderIdForMessages ? 'flex-row-reverse' : 'flex-row'} ${message.isOptimistic ? 'opacity-70' : 'opacity-100'}`}
+                            style={{
+                                display: 'flex',
+                                flexDirection: message.sender._id === senderIdForMessages ? 'row-reverse' : 'row',
+                                alignItems: 'flex-end',
+                                margin: '8px 0',
+                                opacity: message.isOptimistic ? 0.7 : 1,
+                            }}
                         >
                             {/* Avatar */}
                             {message.sender.profilePicture ? (
                                 <img
                                     src={getFullMediaUrl(message.sender.profilePicture)}
                                     alt={message.sender.fullName}
-                                    className="w-8 h-8 rounded-full mx-2 border object-cover"
+                                    className="w-8 h-8 rounded-full mx-2 border"
+                                    style={{ objectFit: 'cover' }}
                                 />
                             ) : (
                                 <div className="w-8 h-8 rounded-full bg-gray-300 mx-2 flex items-center justify-center text-xs text-gray-600">
                                     {message.sender.fullName ? message.sender.fullName[0] : '?'}
                                 </div>
                             )}
-                            <span className={`inline-block p-2 rounded-lg max-w-[70%] ${message.sender._id === senderIdForMessages ? 'bg-[#003366] text-white' : 'bg-gray-200 text-gray-800'
-                                }`}>
+                            <span className={`inline-block p-2 rounded-lg max-w-[70%] ${
+                                message.sender._id === senderIdForMessages ? 'bg-[#003366] text-white' : 'bg-gray-200 text-gray-800'
+                            }`}>
                                 <strong>{message.sender.fullName || 'Unknown User'}</strong>
                                 <br />
                                 {message.text}
-                                <span className={`block font-normal mt-1 text-xs ${message.sender._id === senderIdForMessages ? 'text-gray-300' : 'text-gray-500'}`}>
+                                <span style={{ fontSize: '0.75em', color: message.sender._id === senderIdForMessages ? '#ccc' : '#555', display: 'block', marginTop: '4px' }}>
                                     {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </span>
@@ -144,10 +153,10 @@ function ChatView({ selectedChatId, currentUserId }) {
             {isOtherTyping && (
                 <div className="flex items-center mb-2 ml-2 text-gray-500 text-sm italic">
                     <span>The other user is typing</span>
-                    <span className="ml-1 flex gap-0.5">
-                        <span className="animate-pulse delay-75">.</span>
-                        <span className="animate-pulse delay-150">.</span>
-                        <span className="animate-pulse delay-300">.</span>
+                    <span className="ml-1 flex">
+                        <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                        <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                        <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
                     </span>
                 </div>
             )}

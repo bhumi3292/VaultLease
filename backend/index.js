@@ -1,4 +1,4 @@
-// backend/index.js
+// vaultlease_backend/index.js
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -7,12 +7,11 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 
 const connectDB = require("./config/db");
-const seedAdmin = require("./utils/seedAdmin");
 const ApiError = require("./utils/api_error");
-const initCronJobs = require("./jobs/checkOverdue");
 
-const app = express();
+const app = express(); // Initialize Express app
 
+// ========== Middleware ==========
 app.use(cors({
     origin: process.env.FRONTEND_URL || "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
@@ -23,42 +22,37 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// API Routes
+// ========== Import & Use API Routes ==========
+
 const authRoutes = require("./routes/authRoutes");
-const assetRoutes = require("./routes/assetRoutes");
-const accessRequestRoutes = require("./routes/accessRequestRoutes");
+const propertyRoutes = require("./routes/propertyRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
-// const cartRoutes = require("./routes/cartRoute"); // Keep but might be unused
+const cartRoutes = require("./routes/cartRoute");
 const paymentRoutes = require('./routes/paymentRoute');
-// const calendarRoutes = require('./routes/calendarRoutes'); // Might need refactor for AccessRequests?
+const calendarRoutes = require('./routes/calendarRoutes');
 const chatbotRoutes = require('./routes/chatbotRoute');
 const chatRoutes = require('./routes/chatRoute');
-
 const userRoutes = require('./routes/userRoutes');
-const departmentRoutes = require('./routes/departmentRoutes');
-const auditLogRoutes = require('./routes/auditLogRoutes'); // Add this
-const notificationRoutes = require('./routes/notificationRoutes');
+const statsRoutes = require('./routes/statsRoute'); // Import Stats Route
 
 app.use("/api/auth", authRoutes);
-app.use("/api/assets", assetRoutes);
-app.use("/api/access", accessRequestRoutes);
-app.use("/api/users", userRoutes); // User Management
-app.use("/api/category", categoryRoutes); // Category management
-app.use("/api/departments", departmentRoutes);
-app.use("/api/audit-logs", auditLogRoutes);
-app.use("/api/notifications", notificationRoutes);
-// app.use("/api/cart", cartRoutes); // Cart logic not yet refactored for Assets
+app.use("/api/spaces", propertyRoutes);
+app.use("/api/departments", categoryRoutes);
+app.use("/api/favorites", cartRoutes);
 app.use('/api/payments', paymentRoutes);
-// app.use('/api/calendar', calendarRoutes); // Calendar logic (timeslots) incompatible with Asset duration logic
+app.use('/api/calendar', calendarRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/chats', chatRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/stats', statsRoutes); // Use Stats Route
 
 app.get("/", (req, res) => {
     res.status(200).send("VaultLease backend running successfully!");
 });
 
-// Global Error Handler
+// ========== Global Error Handler ==========
 app.use((err, req, res, next) => {
+    console.error("Unhandled Error Caught by Global Handler:");
     console.error(err);
 
     if (err instanceof ApiError) {
@@ -87,7 +81,7 @@ app.use((err, req, res, next) => {
         } else if (err.code === "LIMIT_FILE_COUNT") {
             message = "Too many files uploaded.";
         } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
-            message = `Unexpected file field: ${err.field}.`;
+            message = `Unexpected file field: ${err.field}. Please check field names for file uploads (e.g., use 'images' and 'videos').`;
         }
         return res.status(400).json({ success: false, message: message });
     }
@@ -110,8 +104,7 @@ app.use((err, req, res, next) => {
 
 module.exports = app;
 
-// Server Start & Socket.IO
-// Trigger restart 2
+// ========== Conditional Server Start & Socket.IO Setup ==========
 if (require.main === module) {
     const http = require("http");
     const { Server } = require("socket.io");
@@ -127,17 +120,15 @@ if (require.main === module) {
         },
     });
 
+    // ========== Connect DB (for actual server run) ==========
     connectDB()
-        .then(() => {
-            console.log("MongoDB connected successfully!");
-            seedAdmin();
-            initCronJobs();
-        })
+        .then(() => console.log("MongoDB connected successfully!"))
         .catch((err) => {
             console.error("Failed to connect to DB:", err);
             process.exit(1);
         });
 
+    // ========== Socket.IO Connection Handling ==========
     io.on("connection", (socket) => {
         console.log("A user connected:", socket.id);
 

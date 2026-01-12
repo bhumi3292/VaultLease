@@ -1,4 +1,4 @@
-// backend/middlewares/authMiddleware.js
+// vaultlease_backend/middlewares/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
@@ -39,16 +39,17 @@ const requireRole = (requiredRole) => {
             return res.status(401).json({ success: false, message: "Unauthorized. Please authenticate first." });
         }
 
-        const userRole = req.user.role;
-        const rolesArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        const userRole = req.user.role ? req.user.role.toLowerCase() : '';
+        const required = requiredRole.toLowerCase();
 
-        // Case insensitive check
-        const hasRole = rolesArray.some(role => role.toLowerCase() === userRole.toLowerCase());
-
-        if (hasRole) {
+        // Allow 'Admin' to access 'Administrator' routes and vice-versa if needed, 
+        // essentially treating them as the same permission level.
+        if (userRole === required ||
+            (required === 'administrator' && userRole === 'admin') ||
+            (required === 'admin' && userRole === 'administrator')) {
             next();
         } else {
-            return res.status(403).json({ success: false, message: `Access denied: Requires one of [${rolesArray.join(", ")}] role.` });
+            return res.status(403).json({ success: false, message: `Access denied: ${requiredRole} role required.` });
         }
     };
 };

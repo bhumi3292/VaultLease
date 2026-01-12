@@ -1,15 +1,15 @@
-// backend/controllers/cartController.js
-const Cart = require('../models/Cart'); // Assuming the model is named Cart.js
-const Property = require('../models/Property');
-const { asyncHandler } = require('../utils/asyncHandler'); // Assuming you have this utility
+// vaultlease_backend/controllers/cartController.js
+const Cart = require('../models/cart'); // Corrected import case just in case
+const Space = require('../models/Space');
+const { asyncHandler } = require('../utils/asyncHandler');
 
 exports.getCart = asyncHandler(async (req, res) => {
-    const userId = req.user._id; // User ID from authenticated request
+    const userId = req.user._id;
 
+    // Populate using 'Space' model ref from schema
     const cart = await Cart.findOne({ user: userId }).populate('items.property');
 
     if (!cart) {
-        // If a user doesn't have a cart yet, return an empty cart
         return res.status(200).json({ success: true, message: "Cart is empty or not yet created.", data: { user: userId, items: [] } });
     }
 
@@ -21,13 +21,13 @@ exports.addToCart = asyncHandler(async (req, res) => {
     const { propertyId } = req.body;
 
     if (!propertyId) {
-        return res.status(400).json({ success: false, message: "Property ID is required to add to cart." });
+        return res.status(400).json({ success: false, message: "Property/Space ID is required." });
     }
 
-    // Validate if the property exists
-    const propertyExists = await Property.findById(propertyId);
-    if (!propertyExists) {
-        return res.status(404).json({ success: false, message: "Property not found." });
+    // Validate if the space exists
+    const spaceExists = await Space.findById(propertyId);
+    if (!spaceExists) {
+        return res.status(404).json({ success: false, message: "Space/Property not found." });
     }
 
     let cart = await Cart.findOne({ user: userId });

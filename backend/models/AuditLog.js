@@ -9,26 +9,32 @@ const auditLogSchema = new mongoose.Schema({
     action: {
         type: String,
         required: true,
-        enum: ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'APPROVE', 'REJECT', 'PROMOTE_USER', 'OTHER']
+        enum: ['LOGIN', 'LOGOUT', 'REGISTER', 'UPDATE_PROFILE', 'CHANGE_PASSWORD', 'CREATE', 'UPDATE', 'DELETE']
     },
     entity: {
         type: String,
-        required: true, // e.g., 'Asset', 'AccessRequest', 'User'
+        default: null
     },
     entityId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: false
+        default: null
     },
     details: {
-        type: Object, // Flexible field for changed values, snapshots, etc.
-        default: {}
+        type: String, // Keep as string for simple messages, or mixed if we want objects
+        default: ''
     },
     ipAddress: {
-        type: String
+        type: String,
+        default: ''
     },
     userAgent: {
-        type: String
+        type: String,
+        default: ''
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
     }
-}, { timestamps: true });
+});
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

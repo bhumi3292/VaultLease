@@ -1,4 +1,4 @@
-// dreamdwell_backend/controllers/calendarController.js
+// vaultlease_backend/controllers/calendarController.js
 
 const Availability = require('../models/calendar'); // Your Availability model
 const Booking = require('../models/Booking'); // Your Booking model

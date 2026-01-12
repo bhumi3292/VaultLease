@@ -36,6 +36,6 @@ export const updateProfileApi = async (profileData) => {
     return await api.put('/api/auth/update-profile', profileData);
 };
 
-export const verifyOtpApi = async (data) => {
-    return await api.post('/api/auth/verify-otp', data);
+export const logoutUserApi = async () => {
+    return await api.post('/api/auth/logout');
 };

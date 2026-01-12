@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../layouts/Navbar.jsx';
+import Navbar from '../layouts/navbar.jsx';
 import {
     getCartService,
     removeFromCartService
@@ -43,7 +43,7 @@ export default function CartPage() {
         try {
             await removeFromCartService(propertyId);
             setCartItems(prev => prev.filter(item => item.property._id !== propertyId));
-            toast.success("Asset removed from cart!");
+            toast.success("Property removed from cart!");
         } catch (err) {
             toast.error("Failed to remove from cart");
         }

@@ -1,27 +1,12 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const departmentSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: [true, "Department name is required"],
-        unique: true,
-        trim: true
-    },
-    description: {
-        type: String,
-        trim: true
-    },
-    headOfDepartment: {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
-        default: null
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
+  department_name: { type: String, required: true, unique: true },
+  description: { type: String, required: false },
+  manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+  image: { type: String, required: false }
 }, { timestamps: true });
 
-const Department = mongoose.model("Department", departmentSchema);
-
+const Department = mongoose.model('Department', departmentSchema);
 module.exports = Department;
+// (Duplicate schema block removed — original, fuller schema above is used.)

@@ -1,4 +1,4 @@
-// dreamdwell_backend/routers/chat.routes.js
+// vaultlease_backend/routers/chat.routes.js
 const express = require("express");
 const router = express.Router();
 const chatController = require("../controllers/chatController"); // Corrected import path/name

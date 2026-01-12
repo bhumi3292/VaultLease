@@ -14,7 +14,7 @@ describe('Dummy Always Passing Tests', () => {
     expect(obj).toEqual({ a: 1, b: 2 });
   });
   test('string match', () => {
-    expect('VaultLease').toMatch(/Lease/);
+    expect('DreamDwell').toMatch(/Dwell/);
   });
   test('null is null', () => {
     expect(null).toBeNull();

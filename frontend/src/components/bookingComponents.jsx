@@ -5,23 +5,23 @@ import 'react-calendar/dist/Calendar.css';
 import { X, Clock, Info, Home, Calendar as CalendarIcon, CheckCircle, Loader } from 'lucide-react';
 
 const BookingModal = ({
-    show,
-    onClose,
-    propertyTitle,
-    propertyId,
-    landlordId,
-    isAuthenticated,
-    selectedDate,
-    handleDateChange,
-    currentDaySlots,
-    selectedTime,
-    handleSlotSelect,
-    handleConfirmBooking,
-    loadingAvailability,
-    isBookingLoading,
-    bookingSuccess,
-    availableSlots // Corrected prop name: 'availableSlots'
-}) => {
+                          show,
+                          onClose,
+                          propertyTitle,
+                          propertyId,
+                          landlordId,
+                          isAuthenticated,
+                          selectedDate,
+                          handleDateChange,
+                          currentDaySlots,
+                          selectedTime,
+                          handleSlotSelect,
+                          handleConfirmBooking,
+                          loadingAvailability,
+                          isBookingLoading,
+                          bookingSuccess,
+                          availableSlots // Corrected prop name: 'availableSlots'
+                      }) => {
     if (!show) return null;
     const tileClassName = ({ date, view }) => {
         if (view === 'month') {
@@ -96,7 +96,7 @@ const BookingModal = ({
                         {/* Booking Summary and Confirm Button */}
                         {selectedDate && selectedTime && (
                             <div className="mt-auto p-4 bg-[#e6f0ff] rounded-lg border border-[#cce0ff] text-[#003366]">
-                                <h4 className="font-semibold text-lg mb-2 flex items-center"><Info size={20} className="mr-2" />Borrow Request Summary:</h4>
+                                <h4 className="font-semibold text-lg mb-2 flex items-center"><Info size={20} className="mr-2" />Booking Summary:</h4>
                                 <p className="mb-1 flex items-center"><Home size={18} className="mr-2 text-[#003366]" /> Property: <span className="font-medium ml-1">{propertyTitle}</span></p>
                                 <p className="mb-1 flex items-center"><CalendarIcon size={18} className="mr-2 text-[#003366]" /> Date: <span className="font-medium ml-1">{selectedDate.toLocaleDateString()}</span></p>
                                 <p className="mb-3 flex items-center"><Clock size={18} className="mr-2 text-[#003366]" /> Time: <span className="font-medium ml-1">{selectedTime}</span></p>
@@ -106,15 +106,15 @@ const BookingModal = ({
                                     disabled={bookingSuccess || isBookingLoading} // Disable if already booked or loading
                                     className={`w-full py-3 rounded-lg font-bold transition-all duration-300 flex items-center justify-center
                                         ${bookingSuccess ? 'bg-green-500 text-white cursor-not-allowed opacity-70' : // Green if successful
-                                            isBookingLoading ? 'bg-[#003366] text-white opacity-70 cursor-not-allowed' : // Dimmed if loading
-                                                'bg-[#003366] text-white hover:bg-[#002244] shadow-md transform hover:scale-105'}`} // Normal style
+                                        isBookingLoading ? 'bg-[#003366] text-white opacity-70 cursor-not-allowed' : // Dimmed if loading
+                                            'bg-[#003366] text-white hover:bg-[#002244] shadow-md transform hover:scale-105'}`} // Normal style
                                 >
                                     {isBookingLoading ? (
-                                        <><Loader size={20} className="animate-spin mr-2" /> Requesting...</>
+                                        <><Loader size={20} className="animate-spin mr-2" /> Booking...</>
                                     ) : bookingSuccess ? (
-                                        <><CheckCircle size={20} className="inline-block mr-2" /> Borrow Request Confirmed!</>
+                                        <><CheckCircle size={20} className="inline-block mr-2" /> Booking Confirmed!</>
                                     ) : (
-                                        'Confirm Borrow Request'
+                                        'Confirm Booking'
                                     )}
                                 </button>
                             </div>

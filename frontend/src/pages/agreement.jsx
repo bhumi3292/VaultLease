@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // Import navigation hook
-import Navbar from "../layouts/Navbar.jsx";
+import Navbar from "../layouts/navbar.jsx";
 import "../styles/agreement.css"; // Import styles
 
 const Agreement = () => {

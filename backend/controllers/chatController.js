@@ -1,13 +1,13 @@
-// backend/controllers/chatController.js
+// vaultlease_backend/controllers/chat.controller.js
 const Chat = require('../models/chat');
 const User = require('../models/User');
-const Asset = require('../models/Asset'); // Renamed from Property
+const Property = require('../models/Property');
 const { asyncHandler } = require('../utils/asyncHandler');
 
 
 exports.createOrGetChat = asyncHandler(async (req, res) => {
     const currentUserId = req.user._id;
-    const { otherUserId, assetId } = req.body; // propertyId -> assetId
+    const { otherUserId, propertyId } = req.body;
 
     if (!otherUserId) {
         return res.status(400).json({ success: false, message: "Other user ID is required." });
@@ -27,15 +27,15 @@ exports.createOrGetChat = asyncHandler(async (req, res) => {
     let query = { participants: { $all: [currentUserId, otherUserId] } };
     let chatName = `Chat between ${currentUser.fullName} and ${otherUser.fullName}`;
 
-    if (assetId) {
-        const asset = await Asset.findById(assetId);
-        if (!asset) {
-            return res.status(404).json({ success: false, message: "Asset not found." });
+    if (propertyId) {
+        const property = await Property.findById(propertyId);
+        if (!property) {
+            return res.status(404).json({ success: false, message: "Property not found." });
         }
-        query.asset = assetId; // property -> asset
-        chatName = `Chat for ${asset.name}: ${currentUser.fullName} - ${otherUser.fullName}`;
+        query.property = propertyId;
+        chatName = `Chat for ${property.title}: ${currentUser.fullName} - ${otherUser.fullName}`;
     } else {
-        query.asset = { $exists: false }; // property -> asset
+        query.property = { $exists: false }; // For general direct messages not tied to a property
     }
 
     let chat = await Chat.findOne(query);
@@ -44,7 +44,7 @@ exports.createOrGetChat = asyncHandler(async (req, res) => {
         chat = await Chat.create({
             name: chatName,
             participants: [currentUserId, otherUserId],
-            asset: assetId || null, // property -> asset
+            property: propertyId || null,
             messages: [] // Initialize messages array
         });
         return res.status(201).json({ success: true, message: "New chat created.", data: chat });

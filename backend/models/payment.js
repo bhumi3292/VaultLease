@@ -7,14 +7,9 @@ const paymentSchema = mongoose.Schema(
             ref: 'User',
             required: true,
         },
-        asset: {
+        property: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Asset',
-            required: true,
-        },
-        accessRequest: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'AccessRequest',
+            ref: 'Property',
             required: true,
         },
         source: {

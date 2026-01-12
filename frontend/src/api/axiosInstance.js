@@ -1,10 +1,10 @@
 // src/api/axiosInstance.js
 import axios from 'axios';
 import { toast } from 'react-toastify'; // Ensure react-toastify is installed and configured
-import { getEnv } from '../utils/env';
+import { VITE_BACKEND_URL } from '../utils/env';
 
 // Define the API URL from environment variables
-export const API_URL = getEnv('VITE_BACKEND_URL');
+export const API_URL = VITE_BACKEND_URL;
 
 // Create an Axios instance with a base URL
 const instance = axios.create({

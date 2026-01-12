@@ -65,7 +65,7 @@ export default function AddPropertyForm() {
             title: Yup.string().required("Title is required"),
             location: Yup.string().required("Location is required"),
             price: Yup.number().positive("Price must be positive").required("Price is required"),
-            type: Yup.string().required("Asset type is required"),
+            type: Yup.string().required("Property type is required"),
             guests: Yup.number().positive("Guests count must be positive").required("Guests count is required"),
             bedrooms: Yup.number().min(1, "At least 1 bedroom is required").required("Bedroom count is required"),
             bathrooms: Yup.number().min(1, "At least 1 bathroom is required").required("Bathroom count is required"),
@@ -75,7 +75,7 @@ export default function AddPropertyForm() {
         }),
         onSubmit: (values) => {
             console.log("Form Data:", values);
-            toast.success("Asset added successfully!");
+            toast.success("Property added successfully!");
         },
     });
 
@@ -86,7 +86,7 @@ export default function AddPropertyForm() {
 
     return (
         <div className="max-w-4xl mx-auto bg-white p-8 shadow-xl rounded-2xl mt-8 mb-12">
-            <h2 className="text-2xl font-bold text-[#002B5B] mb-6">Add New Asset</h2>
+            <h2 className="text-2xl font-bold text-[#002B5B] mb-6">Add New Property</h2>
 
             <form onSubmit={formik.handleSubmit} className="flex flex-col gap-6">
                 {/* Other inputs */}
@@ -141,7 +141,7 @@ export default function AddPropertyForm() {
                     type="submit"
                     className="bg-[#002B5B] text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
                 >
-                    Add Asset
+                    Add Property
                 </button>
             </form>
 
