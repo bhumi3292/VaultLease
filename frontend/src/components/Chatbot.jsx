@@ -29,21 +29,21 @@ const Chatbot = ({ onClose }) => {
         return (
             <div className="fixed bottom-24 right-4 z-[1000] w-80 rounded-lg shadow-xl border border-gray-200 bg-gray-50 overflow-hidden">
                 {/* Header for minimized state: Theme background, white text */}
-                <div className="flex items-center justify-between bg-[#002B5B] text-white p-3 rounded-t-lg shadow-md">
+                <div className="flex items-center justify-between bg-[#008080] text-white p-3 rounded-t-lg shadow-md">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
-                        <MessageSquare size={20} /> DreamBot - AI Assistant
+                        <MessageSquare size={20} /> VaultBot - AI Assistant
                     </h3>
                     <div className="flex gap-1">
                         <button
                             onClick={() => setIsMinimized(false)}
-                            className="p-1 rounded-full hover:bg-white hover:text-[#002B5B] transition-colors"
+                            className="p-1 rounded-full hover:bg-white hover:text-[#008080] transition-colors"
                             aria-label="Maximize chatbot"
                         >
                             <Maximize2 size={18} />
                         </button>
                         <button
                             onClick={onClose}
-                            className="p-1 rounded-full hover:bg-white hover:text-[#002B5B] transition-colors"
+                            className="p-1 rounded-full hover:bg-white hover:text-[#008080] transition-colors"
                             aria-label="Close chatbot"
                         >
                             <X size={18} />
@@ -57,21 +57,21 @@ const Chatbot = ({ onClose }) => {
     return (
         <div className="fixed bottom-24 right-4 z-[1000] w-80 h-[500px] flex flex-col overflow-hidden rounded-lg shadow-xl border border-gray-200 bg-gray-50">
             {/* Chat Header: Theme background, white text */}
-            <div className="flex items-center justify-between bg-[#002B5B] text-white p-3 rounded-t-lg shadow-md">
+            <div className="flex items-center justify-between bg-[#008080] text-white p-3 rounded-t-lg shadow-md">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <MessageSquare size={20} /> DreamBot - AI Assistant
+                    <MessageSquare size={20} /> VaultBot - AI Assistant
                 </h3>
                 <div className="flex gap-1">
                     <button
                         onClick={() => setIsMinimized(true)}
-                        className="p-1 rounded-full hover:bg-white hover:text-[#002B5B] transition-colors"
+                        className="p-1 rounded-full hover:bg-white hover:text-[#008080] transition-colors"
                         aria-label="Minimize chatbot"
                     >
                         <Minimize2 size={18} />
                     </button>
                     <button
                         onClick={onClose}
-                        className="p-1 rounded-full hover:bg-white hover:text-[#002B5B] transition-colors"
+                        className="p-1 rounded-full hover:bg-white hover:text-[#008080] transition-colors"
                         aria-label="Close chatbot"
                     >
                         <X size={18} />
@@ -83,11 +83,10 @@ const Chatbot = ({ onClose }) => {
             <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-gray-100">
                 {messages.map((msg, index) => (
                     <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] px-4 py-2 text-sm leading-snug break-words ${
-                            msg.sender === 'user'
-                                ? 'bg-[#cce0ff] text-[#002B5B] rounded-xl rounded-br-md'
-                                : 'bg-white text-gray-800 rounded-xl rounded-bl-md shadow-sm'
-                        }`}>
+                        <div className={`max-w-[80%] px-4 py-2 text-sm leading-snug break-words ${msg.sender === 'user'
+                                ? 'bg-[#e0f2f1] text-[#004d40] rounded-xl rounded-br-md border border-[#004d40]/10'
+                                : 'bg-white text-gray-800 rounded-xl rounded-bl-md shadow-sm border border-gray-100'
+                            }`}>
                             {msg.text}
                         </div>
                     </div>
@@ -95,7 +94,7 @@ const Chatbot = ({ onClose }) => {
                 {isLoading && (
                     <div className="flex justify-start">
                         <div className="max-w-[80%] px-4 py-2 text-sm leading-snug bg-white text-gray-800 rounded-xl rounded-bl-md shadow-sm animate-pulse">
-                            DreamBot is typing...
+                            VaultBot is typing...
                         </div>
                     </div>
                 )}
@@ -111,12 +110,12 @@ const Chatbot = ({ onClose }) => {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={isLoading ? "Sending..." : "Type your message..."}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#002B5B] text-gray-700 text-sm"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#008080] text-gray-700 text-sm"
                         disabled={isLoading}
                     />
                     <button
                         onClick={handleSendClick}
-                        className="ml-2 bg-[#002B5B] text-white px-4 py-2 rounded-full hover:bg-[#002244] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                        className="ml-2 bg-[#008080] text-white px-4 py-2 rounded-full hover:bg-[#006666] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-md shadow-[#008080]/20"
                         disabled={isLoading || !input.trim()}
                     >
                         Send

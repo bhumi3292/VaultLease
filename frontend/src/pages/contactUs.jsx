@@ -47,13 +47,13 @@ export default function ContactPage() {
         },
         {
             icon: MapPin,
-            title: "Property Listing",
-            description: "Questions about listing your property",
+            title: "Asset Listing",
+            description: "Questions about listing a department resource",
         },
         {
             icon: MessageCircle,
-            title: "Rental Support",
-            description: "Help with finding or renting a property",
+            title: "Reservation Support",
+            description: "Help with booking a room or lab",
         },
     ];
 
@@ -182,8 +182,8 @@ export default function ContactPage() {
                                     >
                                         <option>General Inquiry</option>
                                         <option>Technical Support</option>
-                                        <option>Property Listing</option>
-                                        <option>Rental Support</option>
+                                        <option>Asset Listing</option>
+                                        <option>Reservation Support</option>
                                         <option>Partnership</option>
                                         <option>Other</option>
                                     </select>
@@ -297,22 +297,22 @@ export default function ContactPage() {
                             {
                                 question: "How do I list my department room?",
                                 answer:
-                                    "Click 'List Your Room' in the header, fill out room details, upload photos, and submit. Our team verifies listings within 24 hours.",
+                                    "Click 'Add Asset' in the header (Admins only), fill out the room details, upload photos, and submit. Our administration verifies listings promptly.",
                             },
                             {
                                 question: "Is there a fee to use VaultLease?",
                                 answer:
-                                    "Browsing is free. Departments or managers may incur a small administrative fee for listings, depending on institutional policies.",
+                                    "Browsing and booking is free for students and staff. Departments manage their own inventory without listing fees.",
                             },
                             {
-                                question: "How are properties verified?",
+                                question: "How are spaces verified?",
                                 answer:
-                                    "We verify all listings through document checks and landlord background checks to ensure authenticity and quality.",
+                                    "We verify all listings through our campus administration team to ensure they meet university standards.",
                             },
                             {
-                                question: "Can I schedule property viewings?",
+                                question: "Can I schedule viewings?",
                                 answer:
-                                    "Yes! You can request viewings directly through property listings and coordinate times with landlords.",
+                                    "Yes! You can request viewings directly through the asset details page and coordinate times with the department manager.",
                             },
                         ].map((faq, index) => (
                             <CustomCard key={index} className="border border-gray-100 hover:shadow-lg transition-shadow bg-white">

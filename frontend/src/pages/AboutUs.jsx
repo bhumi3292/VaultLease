@@ -10,10 +10,10 @@ import aboutMissionImage from "../assets/c.png"; // Changed to c.png for Mission
 
 export default function AboutUs() {
     const stats = [
-        { label: "Properties Listed", value: "50,000+", icon: TrendingUp },
-        { label: "Happy Customers", value: "25,000+", icon: Users },
-        { label: "Cities Covered", value: "100+", icon: Globe },
-        { label: "Years of Experience", value: "8+", icon: Award },
+        { label: "Spaces Available", value: "500+", icon: TrendingUp },
+        { label: "Active Users", value: "2,000+", icon: Users },
+        { label: "Faculties", value: "10+", icon: Globe },
+        { label: "Years of Service", value: "2+", icon: Award },
     ];
 
     const team = [
@@ -21,7 +21,7 @@ export default function AboutUs() {
             name: "Bhumi Singh Subedi",
             role: "Developer",
             image: bhumiSinghImage,
-            bio: "Former real estate executive with years of experience in property management.",
+            bio: "Passionate engineer dedicated to modernizing university campus resource management.",
         },
     ];
 
